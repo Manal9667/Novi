@@ -1,0 +1,12 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+novi:
+  security:
+    jwt:
+      secret: test-only-secret-key-that-is-long-enough-for-hmac-sha
+      expiration-ms: 3600000

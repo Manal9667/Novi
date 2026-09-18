@@ -1,0 +1,130 @@
+package com.novi.service;
+
+import com.novi.dto.book.AuthorDto;
+import com.novi.dto.book.BookResponse;
+import com.novi.dto.book.BookSummaryResponse;
+import com.novi.dto.book.GenreDto;
+import com.novi.entity.Author;
+import com.novi.entity.Book;
+import com.novi.exception.ResourceNotFoundException;
+import com.novi.repository.AuthorRepository;
+import com.novi.repository.BookRepository;
+import com.novi.repository.RatingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class BookService {
+
+    private static final String SOURCE = "open-library";
+
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final RatingRepository ratingRepository;
+    private final OpenLibraryService openLibraryService;
+    private final BookEmbeddingService bookEmbeddingService;
+    private final BookThemeTaggingService bookThemeTaggingService;
+
+    /**
+     * Search combines whatever is already cached locally with a live lookup
+     * against the external metadata provider, importing any new results so
+     * future searches (and the library/rating/review features) can reference
+     * a real, persisted Book row.
+     */
+    @Transactional
+    public List<BookSummaryResponse> search(String query) {
+        List<OpenLibraryService.ExternalBook> externalResults = openLibraryService.search(query, 20);
+
+        return externalResults.stream()
+                .map(this::importIfNeeded)
+                .map(this::toSummary)
+                .toList();
+    }
+
+    @Transactional
+    public Book importIfNeeded(OpenLibraryService.ExternalBook external) {
+        return bookRepository.findByExternalMetadataSourceAndExternalMetadataId(SOURCE, external.externalId())
+                .orElseGet(() -> {
+                    Book book = Book.builder()
+                            .title(external.title())
+                            .coverImageUrl(external.coverImageUrl())
+                            .isbn(external.isbn())
+                            .externalMetadataId(external.externalId())
+                            .externalMetadataSource(SOURCE)
+                            .build();
+
+                    if (external.publicationDate() != null) {
+                        try {
+                            book.setPublicationDate(LocalDate.parse(external.publicationDate()));
+                        } catch (Exception ignored) {
+                            // malformed date from provider - leave null rather than guessing
+                        }
+                    }
+
+                    for (String name : external.authorNames()) {
+                        Author author = authorRepository.findByNameIgnoreCase(name)
+                                .orElseGet(() -> authorRepository.save(Author.builder().name(name).build()));
+                        book.getAuthors().add(author);
+                    }
+
+                    Book saved = bookRepository.save(book);
+
+                    // Best-effort, non-blocking-on-failure enrichment: if the AI
+                    // providers aren't configured, these are silent no-ops and the
+                    // book is still fully usable for Phase 1 features.
+                    bookEmbeddingService.ensureEmbedding(saved);
+                    bookThemeTaggingService.ensureThemes(saved);
+
+                    return saved;
+                });
+    }
+
+    public BookResponse getById(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book " + id + " not found"));
+        return toDetail(book);
+    }
+
+    public Book getEntityById(Long id) {
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book " + id + " not found"));
+    }
+
+    public Page<BookSummaryResponse> browse(int page, int size) {
+        return bookRepository.findAll(PageRequest.of(page, size)).map(this::toSummary);
+    }
+
+    private BookSummaryResponse toSummary(Book book) {
+        return new BookSummaryResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getCoverImageUrl(),
+                book.getAuthors().stream().map(Author::getName).toList()
+        );
+    }
+
+    private BookResponse toDetail(Book book) {
+        Double avg = ratingRepository.findAverageRatingForBook(book);
+        long count = ratingRepository.countByBook(book);
+
+        return new BookResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getDescription(),
+                book.getCoverImageUrl(),
+                book.getIsbn(),
+                book.getPublicationDate(),
+                book.getAuthors().stream().map(a -> new AuthorDto(a.getId(), a.getName())).toList(),
+                book.getGenres().stream().map(g -> new GenreDto(g.getId(), g.getName())).toList(),
+                avg,
+                count
+        );
+    }
+}
