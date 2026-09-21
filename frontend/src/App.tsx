@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Recommendations from './pages/Recommendations';
 import Search from './pages/Search';
+import Scan from './pages/Scan';
 import BookDetails from './pages/BookDetails';
 import MyLibrary from './pages/MyLibrary';
 import MyShelves from './pages/MyShelves';
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+          <Route path="/scan" element={<ProtectedRoute><Scan /></ProtectedRoute>} />
           <Route path="/books/:id" element={<ProtectedRoute><BookDetails /></ProtectedRoute>} />
           <Route path="/library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
           <Route path="/shelves" element={<ProtectedRoute><MyShelves /></ProtectedRoute>} />
