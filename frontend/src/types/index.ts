@@ -113,3 +113,34 @@ export interface ReadingPersonalityResponse {
   themeAffinities: AffinityEntry[];
   summary: string;
 }
+
+
+// Phase 3: computer-vision book scanner
+
+export type ScanType = 'SINGLE_BOOK' | 'SHELF';
+export type ScanSessionStatus = 'AWAITING_CONFIRMATION' | 'COMPLETED';
+export type ScanCandidateStatus = 'PENDING' | 'CONFIRMED' | 'SKIPPED';
+
+export interface ScanCandidate {
+  id: number;
+  detectedTitle: string;
+  detectedAuthor: string | null;
+  confidence: number;
+  matchedBook: BookSummary | null;
+  status: ScanCandidateStatus;
+}
+
+export interface ScanResult {
+  sessionId: number;
+  type: ScanType;
+  detectedCount: number;
+  status: ScanSessionStatus;
+  candidates: ScanCandidate[];
+}
+
+export interface ConfirmScanResponse {
+  addedCount: number;
+  skippedCount: number;
+  alreadyInLibraryCount: number;
+  added: UserBook[];
+}

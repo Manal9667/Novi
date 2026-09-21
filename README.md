@@ -63,7 +63,7 @@ The pacing is slower than most books you rate highly.
 |---|---|
 | Frontend | React, TypeScript |
 | Backend | Java 21+, Spring Boot, Spring Security, Spring Data JPA, Hibernate |
-| Database | PostgreSQL + pgvector |
+| Database | PostgreSQL (book/user embeddings stored as JSON; pgvector-ready) |
 | AI / Recommendations | Embeddings, semantic retrieval, LLM-based reranking |
 | Computer Vision | OCR / vision-language model for spine detection and text extraction |
 | Testing | JUnit, Mockito, Spring Boot Test, Testcontainers |
@@ -133,7 +133,14 @@ GET    /api/shelves
 POST   /api/shelves
 
 GET    /api/recommendations
-POST   /api/recommendations/feedback
+POST   /api/recommendations/ask
+POST   /api/recommendations/{id}/feedback
+GET    /api/recommendations/reading-personality
+
+POST   /api/scan/book              # scan a single physical book (multipart image)
+POST   /api/scan/shelf             # scan a whole bookshelf (multipart image)
+GET    /api/scan/sessions/{id}     # retrieve a previous scan
+POST   /api/scan/sessions/{id}/confirm   # add the confirmed books to the library
 ```
 
 All endpoints follow REST conventions with proper status codes, request validation, and centralized error handling.
@@ -171,7 +178,9 @@ novi/
 - **No email requirement.** Reading history can be personal, so onboarding only requires a username and password, minimizing unnecessary data collection.
 - **Retrieval before ranking.** Recommendations use embeddings + metadata to shrink the candidate pool before any LLM involvement, keeping the AI layer fast and cheap rather than brute-forcing similarity over the whole catalog.
 - **Explainability is mandatory.** Every recommendation ships with a reason tied to real user data — no generic "you might also like" text.
-- **Confidence over automation.** The book scanner never silently populates a library; low-confidence matches always require user confirmation.
+- **Confidence over automation.** The book scanner never silently populates a library; low-confidence matches always require user confirmation. A scan is persisted as a session plus one candidate row per detected book, and a combined score (vision confidence × metadata-match confidence) is surfaced so uncertain reads are flagged rather than guessed.
+- **Graceful AI degradation.** The Voyage (embeddings) and Anthropic (reranking, explanations, vision) integrations are all optional. Without keys, recommendations fall back to deterministic genre/author-overlap ranking so Phases 1–2 work end-to-end; the Phase 3 scanner, which genuinely needs a vision model, returns a clear `503` explaining it must be enabled.
+- **Vectors without pgvector (for now).** Because Novi's catalog is built on demand from search rather than bulk-imported, embeddings are stored as JSON float arrays and cosine similarity is computed in the application layer. This keeps the retrieval step dependency-free; moving to a native `pgvector` column is a drop-in upgrade path if the catalog ever grows large enough to need index-backed similarity search.
 
 ---
 
