@@ -19,6 +19,7 @@ export function NavBar() {
           <Link to="/">Home</Link>
           <Link to="/recommendations">For You</Link>
           <Link to="/search">Search</Link>
+          <Link to="/scan">Scan</Link>
           <Link to="/library">My Library</Link>
           <Link to="/shelves">My Shelves</Link>
           <Link to="/history">History</Link>
