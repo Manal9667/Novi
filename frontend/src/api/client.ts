@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// Default to a same-origin relative path so the app works both in local dev
+// (Vite proxies /api -> the backend, see vite.config.ts) and in the Docker
+// deployment (nginx proxies /api -> the backend, see nginx.conf) without
+// depending on CORS or the backend port being published. Override with
+// VITE_API_BASE_URL when the API lives on a different origin.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL

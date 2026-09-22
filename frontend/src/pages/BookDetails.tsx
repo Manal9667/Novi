@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { StarRating } from '../components/StarRating';
-import type { BookDetail, Rating, Review, ReadingStatus } from '../types';
+import type { BookDetail, Rating, Review, ReadingStatus, UserBook } from '../types';
 
 export default function BookDetails() {
   const { id } = useParams();
@@ -20,17 +21,36 @@ export default function BookDetails() {
     apiClient.get<Rating>(`/books/${id}/ratings/mine`).then((res) => {
       if (res.status === 200) setMyRating(res.data);
     }).catch(() => {});
+    // Reflect the book's current library state so the controls show the right
+    // status and we PATCH (not POST) when the book is already in the library.
+    apiClient.get<UserBook[]>('/library').then((res) => {
+      const entry = res.data.find((ub) => ub.book.id === Number(id));
+      setInLibrary(!!entry);
+      setStatus(entry?.status ?? null);
+    }).catch(() => {});
   }, [id]);
 
   async function handleAddToLibrary(newStatus: ReadingStatus) {
     if (!id) return;
-    if (!inLibrary) {
-      await apiClient.post('/library/books', { bookId: Number(id), status: newStatus });
-      setInLibrary(true);
-    } else {
-      await apiClient.patch(`/library/books/${id}/status`, { status: newStatus });
+    try {
+      if (inLibrary) {
+        await apiClient.patch(`/library/books/${id}/status`, { status: newStatus });
+      } else {
+        await apiClient.post('/library/books', { bookId: Number(id), status: newStatus });
+        setInLibrary(true);
+      }
+      setStatus(newStatus);
+    } catch (err) {
+      // The book may already be in the library (added elsewhere in another tab);
+      // fall back to updating its status rather than failing on the duplicate.
+      if ((err as AxiosError).response?.status === 409) {
+        await apiClient.patch(`/library/books/${id}/status`, { status: newStatus });
+        setInLibrary(true);
+        setStatus(newStatus);
+      } else {
+        throw err;
+      }
     }
-    setStatus(newStatus);
   }
 
   async function handleRate(stars: number) {
@@ -63,10 +83,10 @@ export default function BookDetails() {
           <p>{book.description}</p>
 
           <div className="library-controls">
-            <button onClick={() => handleAddToLibrary('WANT_TO_READ')}>Want to Read</button>
-            <button onClick={() => handleAddToLibrary('CURRENTLY_READING')}>Currently Reading</button>
-            <button onClick={() => handleAddToLibrary('READ')}>Mark as Read</button>
-            <button onClick={() => handleAddToLibrary('DNF')}>DNF</button>
+            <button className={status === 'WANT_TO_READ' ? 'active' : ''} onClick={() => handleAddToLibrary('WANT_TO_READ')}>Want to Read</button>
+            <button className={status === 'CURRENTLY_READING' ? 'active' : ''} onClick={() => handleAddToLibrary('CURRENTLY_READING')}>Currently Reading</button>
+            <button className={status === 'READ' ? 'active' : ''} onClick={() => handleAddToLibrary('READ')}>Mark as Read</button>
+            <button className={status === 'DNF' ? 'active' : ''} onClick={() => handleAddToLibrary('DNF')}>DNF</button>
           </div>
 
           <div>
