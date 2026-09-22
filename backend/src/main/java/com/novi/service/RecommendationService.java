@@ -37,7 +37,9 @@ public class RecommendationService {
     private final RecommendationRepository recommendationRepository;
     private final RecommendationFeedbackRepository recommendationFeedbackRepository;
     private final LibraryService libraryService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Injected Spring-managed bean (shared, pre-configured) rather than a new
+    // ObjectMapper() per service instance.
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public List<RecommendationResponse> getPersonalizedRecommendations(User user) {

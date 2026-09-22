@@ -1,6 +1,7 @@
 package com.novi.service;
 
 import com.novi.dto.book.BookSummaryResponse;
+import com.novi.dto.common.PageResponse;
 import com.novi.dto.library.UserBookResponse;
 import com.novi.entity.Author;
 import com.novi.entity.Book;
@@ -12,11 +13,12 @@ import com.novi.exception.DuplicateResourceException;
 import com.novi.exception.ResourceNotFoundException;
 import com.novi.repository.UserBookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -89,12 +91,12 @@ public class LibraryService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserBookResponse> getLibrary(User user, ReadingStatus filter) {
-        List<UserBook> books = filter != null
-                ? userBookRepository.findByUserAndStatus(user, filter)
-                : userBookRepository.findByUser(user);
+    public PageResponse<UserBookResponse> getLibrary(User user, ReadingStatus filter, Pageable pageable) {
+        Page<UserBook> books = filter != null
+                ? userBookRepository.findByUserAndStatus(user, filter, pageable)
+                : userBookRepository.findByUser(user, pageable);
 
-        return books.stream().map(this::toResponse).toList();
+        return PageResponse.from(books.map(this::toResponse));
     }
 
     private UserBookResponse toResponse(UserBook ub) {

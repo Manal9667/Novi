@@ -1,6 +1,7 @@
 package com.novi.service;
 
 import com.novi.dto.book.BookSummaryResponse;
+import com.novi.dto.common.PageResponse;
 import com.novi.dto.shelf.ShelfResponse;
 import com.novi.entity.*;
 import com.novi.exception.DuplicateResourceException;
@@ -8,6 +9,7 @@ import com.novi.exception.ResourceNotFoundException;
 import com.novi.repository.ShelfBookRepository;
 import com.novi.repository.ShelfRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +39,8 @@ public class ShelfService {
     }
 
     @Transactional(readOnly = true)
-    public List<ShelfResponse> getAll(User user) {
-        return shelfRepository.findByUser(user).stream().map(this::toResponse).toList();
+    public PageResponse<ShelfResponse> getAll(User user, Pageable pageable) {
+        return PageResponse.from(shelfRepository.findByUser(user, pageable).map(this::toResponse));
     }
 
     @Transactional
