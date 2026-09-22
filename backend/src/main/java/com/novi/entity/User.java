@@ -46,6 +46,16 @@ public class User {
     @Column(name = "taste_vector_updated_at")
     private Instant tasteVectorUpdatedAt;
 
+    /**
+     * True when a taste-affecting signal (rating, library change, review,
+     * recommendation feedback) has occurred since the taste profile was last
+     * recomputed. Read paths recompute only when this is set, instead of on
+     * every request. New users start stale so their profile is built on first read.
+     */
+    @Column(name = "taste_profile_stale", nullable = false)
+    @Builder.Default
+    private boolean tasteProfileStale = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

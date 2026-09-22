@@ -18,11 +18,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+/**
+ * Safely read the persisted user. A corrupted or tampered `novi_user` value
+ * (e.g. invalid JSON) would otherwise throw during the very first render and
+ * white-screen the whole app, with no way for the user to recover. Instead we
+ * clear the bad value and treat the user as logged out.
+ */
+function readStoredUser(): StoredUser | null {
+  const raw = localStorage.getItem('novi_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as StoredUser;
+  } catch {
+    localStorage.removeItem('novi_user');
+    localStorage.removeItem('novi_token');
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<StoredUser | null>(() => {
-    const raw = localStorage.getItem('novi_user');
-    return raw ? JSON.parse(raw) : null;
-  });
+  const [user, setUser] = useState<StoredUser | null>(() => readStoredUser());
 
   useEffect(() => {
     if (user) {

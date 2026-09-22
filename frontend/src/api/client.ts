@@ -11,6 +11,14 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL
 });
 
+// SECURITY TRADEOFF: the JWT is kept in localStorage, which is readable by any
+// script running on the page, so a successful XSS could exfiltrate it. The more
+// robust option is to have the backend issue the token in an httpOnly, Secure,
+// SameSite cookie so JavaScript can never read it. That is deliberately not done
+// here because it would require re-architecting the API's stateless Bearer-token
+// auth (cookie issuance + CSRF protection + credentialed CORS). Until then, the
+// mitigation is to keep the app free of XSS sinks (React escapes by default; avoid
+// dangerouslySetInnerHTML) and to keep token lifetimes short.
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('novi_token');
   if (token) {

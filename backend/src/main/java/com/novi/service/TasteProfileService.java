@@ -44,6 +44,33 @@ public class TasteProfileService {
 
     private record WeightedBook(Book book, double weight) {}
 
+    /**
+     * Recomputes the profile only if it has been marked stale (or was never
+     * computed). This is what the read paths (recommendations, reading
+     * personality) call, so a page view with no new signal is essentially free
+     * instead of triggering a full delete/reinsert of every affinity row.
+     */
+    @Transactional
+    public void recomputeIfStale(User user) {
+        if (user.isTasteProfileStale() || user.getTasteVectorUpdatedAt() == null) {
+            recompute(user);
+        }
+    }
+
+    /**
+     * Flags the profile for recomputation on the next read. Called from the
+     * write paths that change taste signals (ratings, library changes, reviews,
+     * recommendation feedback). Cheap: a single-row update, and a no-op when the
+     * profile is already known to be stale.
+     */
+    @Transactional
+    public void markStale(User user) {
+        if (!user.isTasteProfileStale()) {
+            user.setTasteProfileStale(true);
+            userRepository.save(user);
+        }
+    }
+
     @Transactional
     public void recompute(User user) {
         List<WeightedBook> signals = collectSignals(user);
@@ -98,6 +125,7 @@ public class TasteProfileService {
             user.setTasteVector(null);
         }
         user.setTasteVectorUpdatedAt(Instant.now());
+        user.setTasteProfileStale(false);
         userRepository.save(user);
     }
 

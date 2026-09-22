@@ -27,6 +27,7 @@ class ReviewServiceTest {
 
     @Mock private ReviewRepository reviewRepository;
     @Mock private BookService bookService;
+    @Mock private com.novi.service.TasteProfileService tasteProfileService;
 
     @InjectMocks
     private ReviewService reviewService;
