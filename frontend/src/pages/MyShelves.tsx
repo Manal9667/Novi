@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 import { BookCard } from '../components/BookCard';
-import type { Shelf } from '../types';
+import type { Page, Shelf } from '../types';
 
 export default function MyShelves() {
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [newShelfName, setNewShelfName] = useState('');
 
   function loadShelves() {
-    apiClient.get<Shelf[]>('/shelves').then((res) => setShelves(res.data));
+    apiClient.get<Page<Shelf>>('/shelves').then((res) => setShelves(res.data.content));
   }
 
   useEffect(loadShelves, []);

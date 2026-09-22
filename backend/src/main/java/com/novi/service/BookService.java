@@ -7,8 +7,10 @@ import com.novi.dto.book.GenreDto;
 import com.novi.entity.Author;
 import com.novi.entity.Book;
 import com.novi.exception.ResourceNotFoundException;
+import com.novi.entity.Genre;
 import com.novi.repository.AuthorRepository;
 import com.novi.repository.BookRepository;
+import com.novi.repository.GenreRepository;
 import com.novi.repository.RatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,8 +27,19 @@ public class BookService {
 
     private static final String SOURCE = "open-library";
 
+    /** Book.description is a length-4000 column; keep provider text within it. */
+    private static final int MAX_DESCRIPTION_LENGTH = 4000;
+    /** Genre.name is a length-100 column; skip noisier, longer subject strings. */
+    private static final int MAX_GENRE_NAME_LENGTH = 100;
+    /**
+     * Open Library returns dozens of loosely-curated subjects per work. Keep a
+     * handful so genres stay meaningful signal rather than noise.
+     */
+    private static final int MAX_GENRES_PER_BOOK = 8;
+
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
+    private final GenreRepository genreRepository;
     private final RatingRepository ratingRepository;
     private final OpenLibraryService openLibraryService;
     private final BookEmbeddingService bookEmbeddingService;
@@ -74,11 +87,22 @@ public class BookService {
                         book.getAuthors().add(author);
                     }
 
+                    // The search endpoint doesn't return a description or subjects,
+                    // so pull the richer "work" document once, at import time. This
+                    // is what gives book detail pages a real description and gives
+                    // the taste profile / recommender genre signal to work with.
+                    openLibraryService.fetchWorkDetails(external.externalId()).ifPresent(details -> {
+                        applyDescription(book, details.description());
+                        applyGenres(book, details.subjects());
+                    });
+
                     Book saved = bookRepository.save(book);
 
                     // Best-effort, non-blocking-on-failure enrichment: if the AI
                     // providers aren't configured, these are silent no-ops and the
-                    // book is still fully usable for Phase 1 features.
+                    // book is still fully usable for Phase 1 features. Runs after the
+                    // description/genres are set so the embedding representation and
+                    // theme tagging see the full metadata.
                     bookEmbeddingService.ensureEmbedding(saved);
                     bookThemeTaggingService.ensureThemes(saved);
 
@@ -102,6 +126,32 @@ public class BookService {
     @Transactional(readOnly = true)
     public Page<BookSummaryResponse> browse(int page, int size) {
         return bookRepository.findAll(PageRequest.of(page, size)).map(this::toSummary);
+    }
+
+    private void applyDescription(Book book, String description) {
+        if (description == null || description.isBlank()) {
+            return;
+        }
+        String trimmed = description.length() > MAX_DESCRIPTION_LENGTH
+                ? description.substring(0, MAX_DESCRIPTION_LENGTH)
+                : description;
+        book.setDescription(trimmed);
+    }
+
+    private void applyGenres(Book book, List<String> subjects) {
+        if (subjects == null || subjects.isEmpty()) {
+            return;
+        }
+        subjects.stream()
+                .map(String::trim)
+                .filter(name -> !name.isBlank() && name.length() <= MAX_GENRE_NAME_LENGTH)
+                .distinct()
+                .limit(MAX_GENRES_PER_BOOK)
+                .forEach(name -> {
+                    Genre genre = genreRepository.findByNameIgnoreCase(name)
+                            .orElseGet(() -> genreRepository.save(Genre.builder().name(name).build()));
+                    book.getGenres().add(genre);
+                });
     }
 
     private BookSummaryResponse toSummary(Book book) {

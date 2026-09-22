@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '../api/client';
 import { BookCard } from '../components/BookCard';
-import type { BookSummary } from '../types';
+import type { BookSummary, Page } from '../types';
 
 export default function Search() {
   const [query, setQuery] = useState('');
@@ -15,8 +15,8 @@ export default function Search() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get<BookSummary[]>('/books', { params: { q: query } });
-      setResults(data);
+      const { data } = await apiClient.get<Page<BookSummary>>('/books', { params: { q: query } });
+      setResults(data.content);
     } catch (err) {
       setError('Search failed. Please try again.');
     } finally {

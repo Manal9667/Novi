@@ -61,8 +61,8 @@ class TasteProfileServiceTest {
     void recompute_ratedFiveStarBook_producesHighGenreAffinity() {
         UserBook ub = UserBook.builder().id(100L).user(user).book(fiveStarBook).status(ReadingStatus.READ).build();
         when(userBookRepository.findByUser(user)).thenReturn(List.of(ub));
-        when(ratingRepository.findByUserAndBook(user, fiveStarBook))
-                .thenReturn(Optional.of(Rating.builder().stars(5).build()));
+        when(ratingRepository.findByUser(user))
+                .thenReturn(List.of(Rating.builder().stars(5).book(fiveStarBook).user(user).build()));
         when(bookEmbeddingService.getVector(any())).thenReturn(Optional.empty());
 
         tasteProfileService.recompute(user);
@@ -79,7 +79,7 @@ class TasteProfileServiceTest {
     void recompute_dnfBook_producesBelowNeutralGenreAffinity() {
         UserBook ub = UserBook.builder().id(101L).user(user).book(dnfBook).status(ReadingStatus.DNF).build();
         when(userBookRepository.findByUser(user)).thenReturn(List.of(ub));
-        when(ratingRepository.findByUserAndBook(user, dnfBook)).thenReturn(Optional.empty());
+        when(ratingRepository.findByUser(user)).thenReturn(List.of());
 
         tasteProfileService.recompute(user);
 
@@ -92,6 +92,7 @@ class TasteProfileServiceTest {
     @Test
     void recompute_alwaysClearsExistingAffinitiesFirst() {
         when(userBookRepository.findByUser(user)).thenReturn(List.of());
+        when(ratingRepository.findByUser(user)).thenReturn(List.of());
 
         tasteProfileService.recompute(user);
 

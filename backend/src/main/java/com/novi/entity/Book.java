@@ -2,6 +2,7 @@ package com.novi.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -55,6 +56,7 @@ public class Book {
             uniqueConstraints = @UniqueConstraint(columnNames = {"book_id", "author_id"})
     )
     @Builder.Default
+    @BatchSize(size = 50)
     private Set<Author> authors = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -65,6 +67,7 @@ public class Book {
             uniqueConstraints = @UniqueConstraint(columnNames = {"book_id", "genre_id"})
     )
     @Builder.Default
+    @BatchSize(size = 50)
     private Set<Genre> genres = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -75,6 +78,7 @@ public class Book {
             uniqueConstraints = @UniqueConstraint(columnNames = {"book_id", "theme_id"})
     )
     @Builder.Default
+    @BatchSize(size = 50)
     private Set<Theme> themes = new HashSet<>();
 
     /**
