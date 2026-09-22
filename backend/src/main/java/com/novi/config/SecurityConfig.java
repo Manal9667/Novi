@@ -33,6 +33,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
+    private final SecurityProperties securityProperties;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -61,6 +62,11 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        // Privileged: can trigger a large batch of outbound
+                        // embedding calls, so restrict to admins. Declared before
+                        // the public GET rule below (it's a POST, so it isn't
+                        // matched by that rule, but keep intent explicit).
+                        .requestMatchers(HttpMethod.POST, "/api/books/backfill-embeddings").hasRole("ADMIN")
                         // Public book browsing. This also covers the public
                         // GET /api/books/{id}/reviews sub-path; a separate
                         // "/api/books/**/reviews" matcher is invalid because a
@@ -82,7 +88,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        // Configurable per deployment (novi.security.cors.allowed-origin-patterns /
+        // CORS_ALLOWED_ORIGINS); defaults to localhost for dev only.
+        configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOriginPatterns());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

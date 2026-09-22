@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { StarRating } from '../components/StarRating';
-import type { BookDetail, Rating, Review, ReadingStatus, UserBook } from '../types';
+import type { BookDetail, Page, Rating, Review, ReadingStatus, UserBook } from '../types';
 
 export default function BookDetails() {
   const { id } = useParams();
@@ -17,14 +17,14 @@ export default function BookDetails() {
   useEffect(() => {
     if (!id) return;
     apiClient.get<BookDetail>(`/books/${id}`).then((res) => setBook(res.data));
-    apiClient.get<Review[]>(`/books/${id}/reviews`).then((res) => setReviews(res.data));
+    apiClient.get<Page<Review>>(`/books/${id}/reviews`).then((res) => setReviews(res.data.content));
     apiClient.get<Rating>(`/books/${id}/ratings/mine`).then((res) => {
       if (res.status === 200) setMyRating(res.data);
     }).catch(() => {});
     // Reflect the book's current library state so the controls show the right
     // status and we PATCH (not POST) when the book is already in the library.
-    apiClient.get<UserBook[]>('/library').then((res) => {
-      const entry = res.data.find((ub) => ub.book.id === Number(id));
+    apiClient.get<Page<UserBook>>('/library', { params: { size: 200 } }).then((res) => {
+      const entry = res.data.content.find((ub) => ub.book.id === Number(id));
       setInLibrary(!!entry);
       setStatus(entry?.status ?? null);
     }).catch(() => {});

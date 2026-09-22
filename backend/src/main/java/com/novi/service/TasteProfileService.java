@@ -121,9 +121,11 @@ public class TasteProfileService {
             latestHistoryByBook.putIfAbsent(event.getBook().getId(), event);
         }
 
+        // Fetch all of the user's ratings once, keyed by book, rather than
+        // querying per library entry (was an N+1 over the whole library).
         Map<Long, Rating> ratingsByBookId = new HashMap<>();
-        for (UserBook ub : userBookRepository.findByUser(user)) {
-            ratingRepository.findByUserAndBook(user, ub.getBook()).ifPresent(r -> ratingsByBookId.put(ub.getBook().getId(), r));
+        for (Rating rating : ratingRepository.findByUser(user)) {
+            ratingsByBookId.put(rating.getBook().getId(), rating);
         }
 
         for (UserBook ub : userBookRepository.findByUser(user)) {

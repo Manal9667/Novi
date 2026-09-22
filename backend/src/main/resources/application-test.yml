@@ -10,3 +10,11 @@ novi:
     jwt:
       secret: test-only-secret-key-that-is-long-enough-for-hmac-sha
       expiration-ms: 3600000
+    # Effectively disable auth rate limiting under test: the suite makes many
+    # login/register calls from a single client IP against one shared instance.
+    rate-limit:
+      auth:
+        max-requests: 1000000
+        window-seconds: 1
+    # A known admin account for authorization tests (see BookControllerIT).
+    admin-usernames: admin_user
