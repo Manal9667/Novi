@@ -86,17 +86,20 @@ public class BookService {
                 });
     }
 
+    @Transactional(readOnly = true)
     public BookResponse getById(Long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book " + id + " not found"));
         return toDetail(book);
     }
 
+    @Transactional(readOnly = true)
     public Book getEntityById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book " + id + " not found"));
     }
 
+    @Transactional(readOnly = true)
     public Page<BookSummaryResponse> browse(int page, int size) {
         return bookRepository.findAll(PageRequest.of(page, size)).map(this::toSummary);
     }

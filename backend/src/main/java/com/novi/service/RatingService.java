@@ -38,6 +38,7 @@ public class RatingService {
         ratingRepository.deleteByUserAndBook(user, book);
     }
 
+    @Transactional(readOnly = true)
     public RatingResponse getMyRating(User user, Long bookId) {
         Book book = bookService.getEntityById(bookId);
         return ratingRepository.findByUserAndBook(user, book)

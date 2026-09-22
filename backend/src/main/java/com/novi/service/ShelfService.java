@@ -36,6 +36,7 @@ public class ShelfService {
         shelfRepository.delete(shelf);
     }
 
+    @Transactional(readOnly = true)
     public List<ShelfResponse> getAll(User user) {
         return shelfRepository.findByUser(user).stream().map(this::toResponse).toList();
     }

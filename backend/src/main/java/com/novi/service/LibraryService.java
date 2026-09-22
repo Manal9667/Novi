@@ -88,6 +88,7 @@ public class LibraryService {
         return toResponse(userBook);
     }
 
+    @Transactional(readOnly = true)
     public List<UserBookResponse> getLibrary(User user, ReadingStatus filter) {
         List<UserBook> books = filter != null
                 ? userBookRepository.findByUserAndStatus(user, filter)

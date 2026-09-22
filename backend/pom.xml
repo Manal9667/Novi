@@ -94,6 +94,18 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            Makes TestRestTemplate use Apache HttpClient 5 instead of the JDK's
+            HttpURLConnection. The JDK client throws HttpRetryException on a POST
+            that receives a 401 ("cannot retry due to server authentication, in
+            streaming mode"), which prevents asserting on 401 responses. Apache
+            HttpClient has no such limitation.
+        -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -131,6 +143,25 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <!--
+                Failsafe runs the Testcontainers-backed integration tests (*IT)
+                during the "verify" phase. Without this, classes like
+                AuthControllerIT compile but never actually execute, so run
+                "mvn verify" (not just "mvn test") to exercise them.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
