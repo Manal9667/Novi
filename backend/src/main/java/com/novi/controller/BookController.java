@@ -24,22 +24,32 @@ public class BookController {
     private final BookEmbeddingService bookEmbeddingService;
 
     /**
-     * Browse the local catalog, or - when {@code q} is given - search the
-     * external provider. Both branches return the same {@link PageResponse}
-     * envelope so clients get one consistent list shape. Live search results
-     * aren't paginated at the source, so they come back as a single page.
+     * Browse the local catalog. Public and side-effect-free: it only reads
+     * already-imported books. Live external search lives at {@code /search}
+     * because it writes to the database and calls external providers.
      */
     @GetMapping
-    public PageResponse<BookSummaryResponse> browseOrSearch(
-            @RequestParam(required = false) String q,
+    public PageResponse<BookSummaryResponse> browse(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        if (q != null && !q.isBlank()) {
-            return PageResponse.ofSinglePage(bookService.search(q));
-        }
         int boundedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
         return PageResponse.from(bookService.browse(Math.max(0, page), boundedSize));
+    }
+
+    /**
+     * Live search against the external metadata provider. Unlike browsing, this
+     * imports any new results - persisting Book/Author/Genre rows and making
+     * outbound provider/AI calls - so it is an authenticated, state-changing
+     * operation (see SecurityConfig) rather than part of the public read surface.
+     * Results aren't paginated at the source, so they come back as a single page.
+     */
+    @GetMapping("/search")
+    public PageResponse<BookSummaryResponse> search(@RequestParam(defaultValue = "") String q) {
+        if (q.isBlank()) {
+            return PageResponse.ofSinglePage(java.util.List.of());
+        }
+        return PageResponse.ofSinglePage(bookService.search(q));
     }
 
     @GetMapping("/{id}")

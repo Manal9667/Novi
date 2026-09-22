@@ -8,6 +8,8 @@ import com.novi.entity.UserGenreAffinity;
 import com.novi.repository.BookRepository;
 import com.novi.repository.UserBookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -38,9 +40,12 @@ public class CandidateRetrievalService {
                 .map(ub -> ub.getBook().getId())
                 .collect(Collectors.toSet());
 
-        List<Book> pool = bookRepository.findAll().stream()
-                .filter(b -> !ownedBookIds.contains(b.getId()))
-                .toList();
+        // Exclude owned books and bound the working set in the database rather
+        // than loading the entire catalog and filtering in memory.
+        Pageable scanLimit = PageRequest.of(0, Math.max(1, aiProperties.getMaxScanBooks()));
+        List<Book> pool = ownedBookIds.isEmpty()
+                ? bookRepository.findScoringCandidates(scanLimit)
+                : bookRepository.findScoringCandidatesExcluding(ownedBookIds, scanLimit);
 
         Optional<float[]> tasteVector = tasteProfileService.getTasteVector(user);
         Map<Long, Double> genreAffinity = tasteProfileService.getGenreAffinities(user).stream()
@@ -61,12 +66,6 @@ public class CandidateRetrievalService {
                 .sorted(Comparator.comparingDouble(ScoredCandidate::baselineScore).reversed())
                 .limit(aiProperties.getCandidatePoolSize())
                 .toList();
-    }
-
-    private double scoreByEmbedding(Book book, float[] tasteVector) {
-        return bookEmbeddingService.getVector(book)
-                .map(v -> VectorUtils.cosineSimilarity(v, tasteVector))
-                .orElse(0.0);
     }
 
     private double scoreByEmbeddingOrGenre(Book book, float[] tasteVector, Map<Long, Double> genreAffinity) {

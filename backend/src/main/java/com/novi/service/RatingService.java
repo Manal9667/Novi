@@ -16,6 +16,7 @@ public class RatingService {
 
     private final RatingRepository ratingRepository;
     private final BookService bookService;
+    private final TasteProfileService tasteProfileService;
 
     @Transactional
     public RatingResponse rate(User user, Long bookId, int stars) {
@@ -26,6 +27,7 @@ public class RatingService {
 
         rating.setStars(stars);
         rating = ratingRepository.save(rating);
+        tasteProfileService.markStale(user);
 
         return toResponse(rating);
     }
@@ -36,6 +38,7 @@ public class RatingService {
         ratingRepository.findByUserAndBook(user, book)
                 .orElseThrow(() -> new ResourceNotFoundException("You have not rated this book"));
         ratingRepository.deleteByUserAndBook(user, book);
+        tasteProfileService.markStale(user);
     }
 
     @Transactional(readOnly = true)

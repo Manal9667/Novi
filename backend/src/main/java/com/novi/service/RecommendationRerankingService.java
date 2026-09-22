@@ -82,8 +82,14 @@ public class RecommendationRerankingService {
                 Map<Long, Book> booksById = candidates.stream()
                         .collect(Collectors.toMap(c -> c.book().getId(), ScoredCandidate::book));
 
+                int limit = aiProperties.getRecommendationCount();
                 List<RankedResult> results = new ArrayList<>();
                 for (JsonNode node : array) {
+                    // The model is asked for the top N ordered best-first; cap
+                    // defensively so a chatty response can't return (and persist)
+                    // the entire candidate pool.
+                    if (results.size() >= limit) break;
+
                     Long bookId = node.path("bookId").asLong();
                     Book book = booksById.get(bookId);
                     if (book == null) continue; // ignore hallucinated ids defensively
@@ -93,9 +99,14 @@ public class RecommendationRerankingService {
                         node.get("reasons").forEach(r -> reasons.add(r.asText()));
                     }
                     String downside = node.path("potentialDownside").isNull() ? null : node.path("potentialDownside").asText(null);
-                    double matchPercent = node.path("matchPercent").asDouble(0);
 
-                    results.add(new RankedResult(book, matchPercent / 100.0, reasons, downside));
+                    // Clamp to [0,100]: a model can return an out-of-range value
+                    // (or omit the field, defaulting to 0), which would otherwise
+                    // surface to the user as e.g. a "150% match".
+                    double matchPercent = node.path("matchPercent").asDouble(0);
+                    double clampedPercent = Math.max(0.0, Math.min(100.0, matchPercent));
+
+                    results.add(new RankedResult(book, clampedPercent / 100.0, reasons, downside));
                 }
                 return results.isEmpty() ? Optional.empty() : Optional.of(results);
             } catch (Exception e) {

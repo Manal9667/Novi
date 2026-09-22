@@ -13,17 +13,31 @@ import com.novi.repository.BookRepository;
 import com.novi.repository.GenreRepository;
 import com.novi.repository.RatingRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class BookService {
+
+    /**
+     * Self-reference so per-book imports run through the transactional proxy
+     * (a plain {@code this.} call would bypass it). Lets each imported book be
+     * its own short transaction instead of holding one connection open across
+     * the whole batch of external lookups. @Lazy breaks the self-referential
+     * bean cycle at construction time.
+     */
+    @Autowired
+    @Lazy
+    private BookService self;
 
     private static final String SOURCE = "open-library";
 
@@ -50,15 +64,31 @@ public class BookService {
      * against the external metadata provider, importing any new results so
      * future searches (and the library/rating/review features) can reference
      * a real, persisted Book row.
+     *
+     * <p>Deliberately NOT {@code @Transactional}: the external HTTP lookup and
+     * each book's import run outside any single long-lived transaction, so we
+     * don't hold one database connection open for the entire batch. Each book
+     * is imported and summarized in its own short transaction via {@link #self}.
      */
-    @Transactional
     public List<BookSummaryResponse> search(String query) {
         List<OpenLibraryService.ExternalBook> externalResults = openLibraryService.search(query, 20);
 
-        return externalResults.stream()
-                .map(this::importIfNeeded)
-                .map(this::toSummary)
-                .toList();
+        List<BookSummaryResponse> summaries = new ArrayList<>(externalResults.size());
+        for (OpenLibraryService.ExternalBook external : externalResults) {
+            summaries.add(self.importAndSummarize(external));
+        }
+        return summaries;
+    }
+
+    /**
+     * Imports a single external result if not already present and maps it to a
+     * summary, all within one short transaction. Building the summary here (not
+     * in the caller) keeps the lazy author collection accessible while the
+     * transaction is still open, since {@code open-in-view} is disabled.
+     */
+    @Transactional
+    public BookSummaryResponse importAndSummarize(OpenLibraryService.ExternalBook external) {
+        return toSummary(importIfNeeded(external));
     }
 
     @Transactional
