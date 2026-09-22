@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 import { BookCard } from '../components/BookCard';
-import type { ReadingStatus, UserBook } from '../types';
+import type { Page, ReadingStatus, UserBook } from '../types';
 
 const FILTERS: { label: string; value: ReadingStatus | 'ALL' }[] = [
   { label: 'All', value: 'ALL' },
@@ -17,7 +17,7 @@ export default function MyLibrary() {
 
   useEffect(() => {
     const params = filter === 'ALL' ? {} : { status: filter };
-    apiClient.get<UserBook[]>('/library', { params }).then((res) => setBooks(res.data));
+    apiClient.get<Page<UserBook>>('/library', { params }).then((res) => setBooks(res.data.content));
   }, [filter]);
 
   return (

@@ -4,7 +4,7 @@ import { apiClient } from '../api/client';
 import { BookCard } from '../components/BookCard';
 import { RecommendationCard } from '../components/RecommendationCard';
 import { useAuth } from '../context/AuthContext';
-import type { RecommendationResponse, UserBook } from '../types';
+import type { Page, RecommendationResponse, UserBook } from '../types';
 
 export default function Home() {
   const { user } = useAuth();
@@ -14,12 +14,12 @@ export default function Home() {
   const [recommendations, setRecommendations] = useState<RecommendationResponse[]>([]);
 
   useEffect(() => {
-    apiClient.get<UserBook[]>('/library', { params: { status: 'CURRENTLY_READING' } })
-      .then((res) => setCurrentlyReading(res.data));
-    apiClient.get<UserBook[]>('/library', { params: { status: 'WANT_TO_READ' } })
-      .then((res) => setWantToRead(res.data));
-    apiClient.get<UserBook[]>('/library', { params: { status: 'READ' } })
-      .then((res) => setRecentlyFinished(res.data.slice(0, 6)));
+    apiClient.get<Page<UserBook>>('/library', { params: { status: 'CURRENTLY_READING' } })
+      .then((res) => setCurrentlyReading(res.data.content));
+    apiClient.get<Page<UserBook>>('/library', { params: { status: 'WANT_TO_READ' } })
+      .then((res) => setWantToRead(res.data.content));
+    apiClient.get<Page<UserBook>>('/library', { params: { status: 'READ' } })
+      .then((res) => setRecentlyFinished(res.data.content.slice(0, 6)));
     apiClient.get<RecommendationResponse[]>('/recommendations')
       .then((res) => setRecommendations(res.data.slice(0, 3)))
       .catch(() => setRecommendations([]));

@@ -33,6 +33,18 @@ novi:
     jwt:
       secret: ${JWT_SECRET:change-this-development-only-secret-key-please-32bytes+}
       expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24h
+    # Comma-separated usernames granted ROLE_ADMIN (e.g. for /api/books/backfill-embeddings).
+    admin-usernames: ${ADMIN_USERNAMES:}
+    cors:
+      # Comma-separated browser origins allowed to call the API. Localhost-only
+      # by default for dev; set CORS_ALLOWED_ORIGINS to your real frontend origin(s).
+      allowed-origin-patterns: ${CORS_ALLOWED_ORIGINS:http://localhost:*}
+    rate-limit:
+      # Per-client-IP cap on the unauthenticated auth endpoints (login/register)
+      # to blunt brute-force and signup spam.
+      auth:
+        max-requests: ${AUTH_RATE_LIMIT_MAX:10}
+        window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:60}
 
   ai:
     # Embeddings: Voyage AI (Anthropic's recommended embedding partner - there

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
-import type { ReadingHistoryEntry } from '../types';
+import type { Page, ReadingHistoryEntry } from '../types';
 
 const EVENT_LABELS: Record<string, string> = {
   ADDED_TO_LIBRARY: 'Added to library',
@@ -15,7 +15,7 @@ export default function ReadingHistory() {
   const [events, setEvents] = useState<ReadingHistoryEntry[]>([]);
 
   useEffect(() => {
-    apiClient.get<ReadingHistoryEntry[]>('/reading-history').then((res) => setEvents(res.data));
+    apiClient.get<Page<ReadingHistoryEntry>>('/reading-history').then((res) => setEvents(res.data.content));
   }, []);
 
   return (

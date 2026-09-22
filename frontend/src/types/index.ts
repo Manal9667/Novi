@@ -1,5 +1,15 @@
 export type ReadingStatus = 'WANT_TO_READ' | 'CURRENTLY_READING' | 'READ' | 'DNF';
 
+/** Pagination envelope returned by every collection endpoint (see backend PageResponse). */
+export interface Page<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
 export interface AuthResponse {
   token: string;
   userId: number;

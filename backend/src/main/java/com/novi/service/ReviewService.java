@@ -1,5 +1,6 @@
 package com.novi.service;
 
+import com.novi.dto.common.PageResponse;
 import com.novi.dto.review.ReviewResponse;
 import com.novi.entity.Book;
 import com.novi.entity.Review;
@@ -8,10 +9,10 @@ import com.novi.exception.ForbiddenException;
 import com.novi.exception.ResourceNotFoundException;
 import com.novi.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +47,10 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getForBook(Long bookId) {
+    public PageResponse<ReviewResponse> getForBook(Long bookId, Pageable pageable) {
         Book book = bookService.getEntityById(bookId);
-        return reviewRepository.findByBookOrderByCreatedAtDesc(book).stream().map(this::toResponse).toList();
+        Page<Review> reviews = reviewRepository.findByBook(book, pageable);
+        return PageResponse.from(reviews.map(this::toResponse));
     }
 
     private Review getOwnedReview(User user, Long reviewId) {
