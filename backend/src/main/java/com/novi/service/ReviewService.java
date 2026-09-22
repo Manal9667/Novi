@@ -45,6 +45,7 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
+    @Transactional(readOnly = true)
     public List<ReviewResponse> getForBook(Long bookId) {
         Book book = bookService.getEntityById(bookId);
         return reviewRepository.findByBookOrderByCreatedAtDesc(book).stream().map(this::toResponse).toList();

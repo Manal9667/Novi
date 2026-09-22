@@ -33,6 +33,7 @@ public class ReadingHistoryService {
         readingHistoryRepository.save(event);
     }
 
+    @Transactional(readOnly = true)
     public List<ReadingHistoryResponse> getHistory(User user) {
         return readingHistoryRepository.findByUserOrderByOccurredAtDesc(user).stream()
                 .map(e -> new ReadingHistoryResponse(
