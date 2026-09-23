@@ -4,6 +4,7 @@ import com.novi.entity.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,4 +29,29 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     @Query("select b from Book b where b.id not in :excludedIds order by b.id")
     List<Book> findScoringCandidatesExcluding(@Param("excludedIds") Collection<Long> excludedIds, Pageable pageable);
+
+    /**
+     * Index-backed approximate-nearest-neighbour retrieval against the user's
+     * taste vector, using pgvector's cosine-distance operator ({@code <=>}) and
+     * the HNSW index. The taste vector is passed as its JSON float-array text
+     * (valid pgvector input) and cast to a vector. Returns managed Book entities
+     * ordered most-similar first. This replaces scanning the whole catalog and
+     * scoring in the application layer when embeddings are available.
+     */
+    @Query(value = """
+            SELECT * FROM books b
+            WHERE b.embedding_vec IS NOT NULL
+            ORDER BY b.embedding_vec <=> CAST(:taste AS vector)
+            LIMIT :k
+            """, nativeQuery = true)
+    List<Book> findNearestByTasteVector(@Param("taste") String tasteVectorJson, @Param("k") int k);
+
+    /**
+     * Mirrors a book's JSON embedding into the native pgvector column. Native
+     * because {@code embedding_vec} is intentionally not mapped on the entity
+     * (keeping JPA {@code validate} independent of the vector type).
+     */
+    @Modifying
+    @Query(value = "UPDATE books SET embedding_vec = CAST(:vec AS vector) WHERE id = :id", nativeQuery = true)
+    void updateEmbeddingVector(@Param("id") Long id, @Param("vec") String vec);
 }

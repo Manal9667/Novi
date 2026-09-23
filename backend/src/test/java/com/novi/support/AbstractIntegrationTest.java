@@ -33,7 +33,9 @@ public abstract class AbstractIntegrationTest {
 
     static {
         if (EXTERNAL_DB_URL == null || EXTERNAL_DB_URL.isBlank()) {
-            POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
+            POSTGRES = new PostgreSQLContainer<>(
+                        org.testcontainers.utility.DockerImageName.parse("pgvector/pgvector:pg16")
+                            .asCompatibleSubstituteFor("postgres"))
                     .withDatabaseName("novi_test")
                     .withUsername("novi")
                     .withPassword("novi");
