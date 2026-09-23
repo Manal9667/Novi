@@ -34,11 +34,30 @@ public class BookEmbeddingService {
 
         String representation = buildRepresentation(book);
         embeddingService.embed(representation).ifPresent(vector -> {
-            book.setEmbedding(VectorUtils.toJson(vector));
+            String json = VectorUtils.toJson(vector);
+            book.setEmbedding(json);
             book.setEmbeddingModel("voyage");
             book.setEmbeddingUpdatedAt(Instant.now());
-            bookRepository.save(book);
+            Book saved = bookRepository.save(book);
+            syncVectorColumn(saved.getId(), json);
         });
+    }
+
+    /**
+     * Mirrors the JSON embedding into the native {@code pgvector} column used
+     * for index-backed nearest-neighbour retrieval. The JSON float-array text
+     * is already valid pgvector input, so a direct cast populates the column.
+     * Best-effort: a failure here (e.g. a dimension mismatch, or a database
+     * without the vector extension) must not break book import - the JSON
+     * embedding remains the source of truth and the app-layer cosine path still
+     * works.
+     */
+    private void syncVectorColumn(Long bookId, String embeddingJson) {
+        try {
+            bookRepository.updateEmbeddingVector(bookId, embeddingJson);
+        } catch (Exception e) {
+            log.warn("Could not sync pgvector embedding_vec for book {}: {}", bookId, e.getMessage());
+        }
     }
 
     /** Backfill embeddings for any book that doesn't have one yet. Safe to call repeatedly. */
