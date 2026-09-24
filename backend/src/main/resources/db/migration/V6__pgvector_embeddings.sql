@@ -1,30 +1,43 @@
--- Real pgvector-backed semantic retrieval.
+-- Real pgvector-backed semantic retrieval - applied only when the pgvector
+-- extension is actually available on the server.
 --
 -- Novi previously stored embeddings only as a JSON float-array in a TEXT column
 -- and computed cosine similarity in the application layer over the whole
--- catalog. This migration adds a native pgvector column and an ANN index so
--- candidate retrieval is done in the database with an index-backed
--- nearest-neighbour search instead of a full scan.
+-- catalog. When pgvector is present this migration adds a native vector column
+-- plus an HNSW index so candidate retrieval becomes an index-backed
+-- nearest-neighbour search (see CandidateRetrievalService).
 --
--- The JSON TEXT column (books.embedding) remains the app-facing source of
--- truth; embedding_vec is a derived, indexed representation kept in sync by the
--- application (BookEmbeddingService) and backfilled here for existing rows.
+-- IMPORTANT: this migration must never hard-fail startup on a database without
+-- pgvector. It tries to enable the extension; if that isn't possible it logs a
+-- notice and skips the vector column/index entirely. Retrieval then falls back
+-- to the application-layer / genre-overlap path, so the app still boots and
+-- works on any PostgreSQL. Use a pgvector-enabled image (the bundled
+-- docker-compose and the Testcontainers tests use pgvector/pgvector:pg16) to
+-- get the index-backed path.
 --
 -- Dimensionality note: voyage-3.5 (the configured embedding model) produces
 -- 1024-dimensional embeddings, so the column is vector(1024). A deployment that
--- switches to a model with a different output dimension must adjust this and the
--- backfill cast accordingly.
-CREATE EXTENSION IF NOT EXISTS vector;
+-- switches to a model with a different output dimension must adjust this.
+DO $$
+BEGIN
+    -- Enable pgvector; if the extension isn't installed on this server, skip the
+    -- rest of the migration rather than failing the whole startup.
+    BEGIN
+        CREATE EXTENSION IF NOT EXISTS vector;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'pgvector extension unavailable (%); skipping native vector column and index. '
+                     'Retrieval will use the application-layer fallback.', SQLERRM;
+        RETURN;
+    END;
 
-ALTER TABLE books ADD COLUMN embedding_vec vector(1024);
+    ALTER TABLE books ADD COLUMN IF NOT EXISTS embedding_vec vector(1024);
 
--- Backfill embeddings imported before this migration. The JSON float-array text
--- (e.g. [0.12,-0.03,...]) is exactly pgvector's input format, so a direct cast
--- works. Only rows that already carry a 1024-dim embedding are affected.
-UPDATE books SET embedding_vec = embedding::vector(1024) WHERE embedding IS NOT NULL;
+    -- Backfill embeddings imported before this migration. The JSON float-array
+    -- text (e.g. [0.12,-0.03,...]) is exactly pgvector's input format.
+    UPDATE books SET embedding_vec = embedding::vector(1024)
+        WHERE embedding IS NOT NULL AND embedding_vec IS NULL;
 
--- Approximate-nearest-neighbour index for cosine distance (the <=> operator).
--- HNSW gives fast, index-backed similarity search that scales past the
--- in-application full-catalog scan.
-CREATE INDEX idx_books_embedding_vec_hnsw
-    ON books USING hnsw (embedding_vec vector_cosine_ops);
+    -- HNSW index for fast approximate-nearest-neighbour cosine search (<=>).
+    CREATE INDEX IF NOT EXISTS idx_books_embedding_vec_hnsw
+        ON books USING hnsw (embedding_vec vector_cosine_ops);
+END$$;

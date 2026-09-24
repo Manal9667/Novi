@@ -25,6 +25,7 @@ public class BookEmbeddingService {
 
     private final EmbeddingService embeddingService;
     private final BookRepository bookRepository;
+    private final PgVectorSupport pgVectorSupport;
 
     @Transactional
     public void ensureEmbedding(Book book) {
@@ -39,7 +40,12 @@ public class BookEmbeddingService {
             book.setEmbeddingModel("voyage");
             book.setEmbeddingUpdatedAt(Instant.now());
             Book saved = bookRepository.save(book);
-            syncVectorColumn(saved.getId(), json);
+            // Only touch the native vector column when it actually exists,
+            // otherwise the failed UPDATE would poison this transaction and roll
+            // back the embedding we just saved.
+            if (pgVectorSupport.isAvailable()) {
+                syncVectorColumn(saved.getId(), json);
+            }
         });
     }
 

@@ -54,4 +54,14 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Modifying
     @Query(value = "UPDATE books SET embedding_vec = CAST(:vec AS vector) WHERE id = :id", nativeQuery = true)
     void updateEmbeddingVector(@Param("id") Long id, @Param("vec") String vec);
+
+    /**
+     * Whether the native pgvector column exists (i.e. the V6 migration created
+     * it because the extension was available). Lets the app avoid issuing
+     * vector queries against a database that skipped the pgvector path, which
+     * would otherwise error and poison the surrounding transaction.
+     */
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
+            + "WHERE table_name = 'books' AND column_name = 'embedding_vec')", nativeQuery = true)
+    boolean isEmbeddingVectorColumnPresent();
 }
