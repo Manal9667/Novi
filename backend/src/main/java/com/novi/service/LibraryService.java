@@ -27,6 +27,7 @@ public class LibraryService {
     private final UserBookRepository userBookRepository;
     private final BookService bookService;
     private final ReadingHistoryService readingHistoryService;
+    private final TasteProfileService tasteProfileService;
 
     @Transactional
     public UserBookResponse addBook(User user, Long bookId, ReadingStatus requestedStatus) {
@@ -48,6 +49,7 @@ public class LibraryService {
 
         userBook = userBookRepository.save(userBook);
         readingHistoryService.record(user, book, HistoryEventType.ADDED_TO_LIBRARY);
+        tasteProfileService.markStale(user);
 
         return toResponse(userBook);
     }
@@ -60,6 +62,7 @@ public class LibraryService {
 
         userBookRepository.delete(userBook);
         readingHistoryService.record(user, book, HistoryEventType.REMOVED_FROM_LIBRARY);
+        tasteProfileService.markStale(user);
     }
 
     @Transactional
@@ -86,6 +89,7 @@ public class LibraryService {
 
         userBook = userBookRepository.save(userBook);
         readingHistoryService.record(user, book, eventType);
+        tasteProfileService.markStale(user);
 
         return toResponse(userBook);
     }

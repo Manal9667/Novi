@@ -31,6 +31,10 @@ server:
 novi:
   security:
     jwt:
+      # The committed default is a PUBLIC value usable only for local dev. The
+      # app refuses to start with it unless a dev/test/local profile is active
+      # (e.g. SPRING_PROFILES_ACTIVE=dev); any real deployment MUST set a strong,
+      # unique JWT_SECRET of at least 32 bytes. See JwtService.
       secret: ${JWT_SECRET:change-this-development-only-secret-key-please-32bytes+}
       expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24h
     # Comma-separated usernames granted ROLE_ADMIN (e.g. for /api/books/backfill-embeddings).
@@ -45,6 +49,11 @@ novi:
       auth:
         max-requests: ${AUTH_RATE_LIMIT_MAX:10}
         window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:60}
+        # X-Forwarded-For is spoofable, so it's ignored by default (the limiter
+        # keys on the socket address). Set this true ONLY when the app sits
+        # behind a trusted reverse proxy (e.g. nginx) that overwrites the header
+        # with the real client IP.
+        trust-forwarded-for: ${AUTH_RATE_LIMIT_TRUST_XFF:false}
 
   ai:
     # Embeddings: Voyage AI (Anthropic's recommended embedding partner - there
@@ -68,6 +77,10 @@ novi:
 
     candidate-pool-size: ${NOVI_CANDIDATE_POOL_SIZE:100}
     recommendation-count: ${NOVI_RECOMMENDATION_COUNT:10}
+    # Upper bound on books loaded and scored per recommendation request, so a
+    # large catalog can't be pulled into memory wholesale. A vector index is the
+    # proper fix for very large catalogs (see README).
+    max-scan-books: ${NOVI_MAX_SCAN_BOOKS:5000}
 
 logging:
   level:

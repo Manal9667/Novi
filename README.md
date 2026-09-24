@@ -42,9 +42,10 @@ The pacing is slower than most books you rate highly.
 
 ### AI Recommendation Engine
 - Per-user taste profiles built from ratings, reviews, genres, authors, and reading history, with signal strength weighted by rating (5★ = strong positive, DNF = negative, etc.)
-- Book semantic embeddings (via `pgvector`) used for candidate retrieval
+- Book semantic embeddings stored in a native **`pgvector`** column with an **HNSW** index; candidate retrieval is an index-backed approximate-nearest-neighbour search (cosine distance) rather than a full-catalog scan
 - Candidate set narrowed from the full catalog down to ~100 books before ranking
 - LLM-based reranking of candidates against the user's taste profile
+- Retrieval quality is measured with an offline **evaluation harness** (Precision@K, Recall@K, MRR, nDCG@K) — see [Evaluation](#evaluation)
 - Explainable recommendations — every suggestion states *why*, grounded in the user's actual data
 - Natural-language recommendation requests (e.g. "something like Harry Potter but darker")
 - Recommendation feedback (👍 / 👎 / add to Want to Read) that feeds back into future recommendations
@@ -63,8 +64,8 @@ The pacing is slower than most books you rate highly.
 |---|---|
 | Frontend | React, TypeScript |
 | Backend | Java 21+, Spring Boot, Spring Security, Spring Data JPA, Hibernate |
-| Database | PostgreSQL (book/user embeddings stored as JSON; pgvector-ready) |
-| AI / Recommendations | Embeddings, semantic retrieval, LLM-based reranking |
+| Database | PostgreSQL + `pgvector` (HNSW-indexed vector similarity search) |
+| AI / Recommendations | Vector embeddings, pgvector ANN retrieval, LLM-based reranking, offline evaluation harness |
 | Computer Vision | OCR / vision-language model for spine detection and text extraction |
 | Testing | JUnit, Mockito, Spring Boot Test, Testcontainers |
 | Infrastructure | Docker, Docker Compose |
@@ -180,7 +181,41 @@ novi/
 - **Explainability is mandatory.** Every recommendation ships with a reason tied to real user data — no generic "you might also like" text.
 - **Confidence over automation.** The book scanner never silently populates a library; low-confidence matches always require user confirmation. A scan is persisted as a session plus one candidate row per detected book, and a combined score (vision confidence × metadata-match confidence) is surfaced so uncertain reads are flagged rather than guessed.
 - **Graceful AI degradation.** The Voyage (embeddings) and Anthropic (reranking, explanations, vision) integrations are all optional. Without keys, recommendations fall back to deterministic genre/author-overlap ranking so Phases 1–2 work end-to-end; the Phase 3 scanner, which genuinely needs a vision model, returns a clear `503` explaining it must be enabled.
-- **Vectors without pgvector (for now).** Because Novi's catalog is built on demand from search rather than bulk-imported, embeddings are stored as JSON float arrays and cosine similarity is computed in the application layer. This keeps the retrieval step dependency-free; moving to a native `pgvector` column is a drop-in upgrade path if the catalog ever grows large enough to need index-backed similarity search.
+- **pgvector-backed retrieval.** Book embeddings live in a native `pgvector` column (`books.embedding_vec`, `vector(1024)`) with an HNSW index over cosine distance, so candidate retrieval is an index-backed nearest-neighbour query (`embedding_vec <=> :taste`) instead of scanning the whole catalog. The JSON float-array column remains the app-facing source of truth and is mirrored into the vector column on write (the JSON array text is already valid `pgvector` input); if a database has no vector extension or a candidate lacks an embedding, retrieval degrades gracefully to a bounded genre-affinity scan with app-layer cosine, so recommendations still work. Requires a `pgvector`-enabled Postgres (the bundled `docker-compose.yml` and the Testcontainers integration tests both use `pgvector/pgvector:pg16`).
+
+---
+
+## Evaluation
+
+Retrieval quality is measured, not assumed. The `com.novi.eval` package provides a small, dependency-free evaluation toolkit:
+
+- **`RetrievalMetrics`** — Precision@K, Recall@K, Reciprocal Rank (→ MRR), and nDCG@K over ranked results against a labeled relevant set (binary relevance).
+- **`RetrievalEvaluationHarness`** — runs any `Retriever` over a set of labeled queries and aggregates the metrics at a cutoff `k`.
+- **`VectorRetriever`** — an in-memory retriever with pluggable scoring strategies (`DOT_PRODUCT`, `COSINE`, `CENTERED_COSINE`) used to compare embedding-representation choices.
+- **`SyntheticEvaluationData`** — deterministically generates a labeled, clustered dataset from a fixed seed, so experiments are fully reproducible with no API key or database.
+- **`EmbeddingRepresentationExperiment`** — runs every strategy through the harness and selects the best by nDCG@K.
+
+### Reproducible experiment
+
+```bash
+cd backend
+mvn -q compile
+java -cp target/classes com.novi.eval.RetrievalEvaluationRunner
+```
+
+Example output (deterministic for the fixed seed):
+
+```
+Novi retrieval-quality evaluation (seed=42, dim=64, topics=8, k=10)
+-------------------------------------------------------------
+DOT_PRODUCT         P@10=0.619  R@10=0.773  MRR=0.984  nDCG@10=0.815
+COSINE              P@10=0.772  R@10=0.965  MRR=0.984  nDCG@10=0.965
+CENTERED_COSINE     P@10=0.741  R@10=0.926  MRR=0.964  nDCG@10=0.931
+-------------------------------------------------------------
+Best strategy by nDCG@10: COSINE (nDCG=0.965)
+```
+
+The experiment quantifies a real design choice: raw dot-product retrieval scores markedly worse (nDCG 0.815) than L2-normalized cosine (0.965) on this embedding space, because vector magnitude carries no topic signal — which is exactly why retrieval uses cosine distance. The metrics and the experiment are covered by unit tests (`RetrievalMetricsTest`, `RetrievalEvaluationHarnessTest`), so the workflow runs in CI.
 
 ---
 

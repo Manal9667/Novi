@@ -36,7 +36,8 @@ public class ReadingPersonalityService {
 
     @Transactional
     public ReadingPersonalityResponse getReadingPersonality(User user) {
-        tasteProfileService.recompute(user);
+        // Only recompute when a taste signal has changed since the last build.
+        tasteProfileService.recomputeIfStale(user);
 
         List<UserGenreAffinity> genreAffinities = tasteProfileService.getGenreAffinities(user);
         List<UserThemeAffinity> themeAffinities = tasteProfileService.getThemeAffinities(user);

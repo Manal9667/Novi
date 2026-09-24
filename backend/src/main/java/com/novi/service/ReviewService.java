@@ -20,6 +20,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final BookService bookService;
+    private final TasteProfileService tasteProfileService;
 
     @Transactional
     public ReviewResponse create(User user, Long bookId, String content) {
@@ -30,7 +31,9 @@ public class ReviewService {
         });
 
         Review review = Review.builder().user(user).book(book).content(content).build();
-        return toResponse(reviewRepository.save(review));
+        ReviewResponse response = toResponse(reviewRepository.save(review));
+        tasteProfileService.markStale(user);
+        return response;
     }
 
     @Transactional
@@ -44,6 +47,7 @@ public class ReviewService {
     public void delete(User user, Long reviewId) {
         Review review = getOwnedReview(user, reviewId);
         reviewRepository.delete(review);
+        tasteProfileService.markStale(user);
     }
 
     @Transactional(readOnly = true)

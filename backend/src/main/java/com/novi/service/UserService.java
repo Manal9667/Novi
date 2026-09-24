@@ -9,6 +9,7 @@ import com.novi.repository.UserBookRepository;
 import com.novi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,14 +19,15 @@ public class UserService {
     private final UserBookRepository userBookRepository;
     private final ReviewRepository reviewRepository;
 
+    @Transactional(readOnly = true)
     public UserProfileResponse getProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User '" + username + "' not found"));
 
-        long read = userBookRepository.findByUserAndStatus(user, ReadingStatus.READ).size();
-        long reading = userBookRepository.findByUserAndStatus(user, ReadingStatus.CURRENTLY_READING).size();
-        long wantToRead = userBookRepository.findByUserAndStatus(user, ReadingStatus.WANT_TO_READ).size();
-        long reviews = reviewRepository.findByUserOrderByCreatedAtDesc(user).size();
+        long read = userBookRepository.countByUserAndStatus(user, ReadingStatus.READ);
+        long reading = userBookRepository.countByUserAndStatus(user, ReadingStatus.CURRENTLY_READING);
+        long wantToRead = userBookRepository.countByUserAndStatus(user, ReadingStatus.WANT_TO_READ);
+        long reviews = reviewRepository.countByUser(user);
 
         return new UserProfileResponse(
                 user.getId(),

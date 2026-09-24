@@ -8,6 +8,8 @@ import com.novi.entity.UserGenreAffinity;
 import com.novi.repository.BookRepository;
 import com.novi.repository.UserBookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -16,10 +18,14 @@ import java.util.stream.Collectors;
 /**
  * Narrows the full catalog down to a manageable candidate set before any LLM
  * call is made - per the brief, the entire book database is never sent to an
- * LLM. Candidates are scored by cosine similarity to the user's taste vector
- * when embeddings are available, falling back to a genre-affinity overlap
- * heuristic otherwise, so recommendations still work even with the AI
- * providers unconfigured.
+ * LLM.
+ *
+ * <p>When the user has a taste vector and books have embeddings, retrieval is
+ * done in the database via pgvector's index-backed nearest-neighbour search
+ * (cosine distance / HNSW), so we never scan the whole catalog. If no embedded
+ * candidates exist yet (e.g. a fresh catalog, or the embedding provider is
+ * unconfigured), it falls back to a genre-affinity overlap heuristic over a
+ * bounded catalog scan, so recommendations still work without the AI providers.
  */
 @Service
 @RequiredArgsConstructor
@@ -30,6 +36,7 @@ public class CandidateRetrievalService {
     private final BookEmbeddingService bookEmbeddingService;
     private final TasteProfileService tasteProfileService;
     private final AiProperties aiProperties;
+    private final PgVectorSupport pgVectorSupport;
 
     public record ScoredCandidate(Book book, double baselineScore) {}
 
@@ -38,42 +45,57 @@ public class CandidateRetrievalService {
                 .map(ub -> ub.getBook().getId())
                 .collect(Collectors.toSet());
 
-        List<Book> pool = bookRepository.findAll().stream()
-                .filter(b -> !ownedBookIds.contains(b.getId()))
-                .toList();
-
         Optional<float[]> tasteVector = tasteProfileService.getTasteVector(user);
-        Map<Long, Double> genreAffinity = tasteProfileService.getGenreAffinities(user).stream()
-            .collect(Collectors.toMap(a -> a.getGenre().getId(), UserGenreAffinity::getScore));
 
-        List<ScoredCandidate> scored;
-        if (tasteVector.isPresent()) {
-            scored = pool.stream()
-                .map(book -> new ScoredCandidate(book, scoreByEmbeddingOrGenre(book, tasteVector.get(), genreAffinity)))
-                    .toList();
-        } else {
-            scored = pool.stream()
-                    .map(book -> new ScoredCandidate(book, scoreByGenreOverlap(book, genreAffinity)))
-                    .toList();
+        // Primary path: index-backed ANN retrieval via pgvector, only when the
+        // native vector column is present (otherwise fall through to the scan).
+        if (tasteVector.isPresent() && pgVectorSupport.isAvailable()) {
+            List<ScoredCandidate> viaVector = retrieveByVector(tasteVector.get(), ownedBookIds);
+            if (!viaVector.isEmpty()) {
+                return viaVector;
+            }
         }
 
-        return scored.stream()
+        // Fallback: bounded catalog scan scored by genre-affinity overlap.
+        return retrieveByGenreOverlap(user, ownedBookIds);
+    }
+
+    /**
+     * Retrieves the nearest candidates to the taste vector using pgvector, then
+     * computes the exact cosine similarity in-app for the baseline score the
+     * reranker orders by. Over-fetches by the number of owned books so filtering
+     * them out still leaves a full candidate pool.
+     */
+    private List<ScoredCandidate> retrieveByVector(float[] tasteVector, Set<Long> ownedBookIds) {
+        int poolSize = aiProperties.getCandidatePoolSize();
+        int fetch = poolSize + ownedBookIds.size();
+        List<Book> nearest = bookRepository.findNearestByTasteVector(VectorUtils.toJson(tasteVector), fetch);
+
+        return nearest.stream()
+                .filter(book -> !ownedBookIds.contains(book.getId()))
+                .map(book -> new ScoredCandidate(book, bookEmbeddingService.getVector(book)
+                        .map(v -> VectorUtils.cosineSimilarity(v, tasteVector))
+                        .orElse(0.0)))
+                .limit(poolSize)
+                .toList();
+    }
+
+    private List<ScoredCandidate> retrieveByGenreOverlap(User user, Set<Long> ownedBookIds) {
+        // Bound the working set in the database rather than loading the whole
+        // catalog and filtering in memory.
+        Pageable scanLimit = PageRequest.of(0, Math.max(1, aiProperties.getMaxScanBooks()));
+        List<Book> pool = ownedBookIds.isEmpty()
+                ? bookRepository.findScoringCandidates(scanLimit)
+                : bookRepository.findScoringCandidatesExcluding(ownedBookIds, scanLimit);
+
+        Map<Long, Double> genreAffinity = tasteProfileService.getGenreAffinities(user).stream()
+                .collect(Collectors.toMap(a -> a.getGenre().getId(), UserGenreAffinity::getScore));
+
+        return pool.stream()
+                .map(book -> new ScoredCandidate(book, scoreByGenreOverlap(book, genreAffinity)))
                 .sorted(Comparator.comparingDouble(ScoredCandidate::baselineScore).reversed())
                 .limit(aiProperties.getCandidatePoolSize())
                 .toList();
-    }
-
-    private double scoreByEmbedding(Book book, float[] tasteVector) {
-        return bookEmbeddingService.getVector(book)
-                .map(v -> VectorUtils.cosineSimilarity(v, tasteVector))
-                .orElse(0.0);
-    }
-
-    private double scoreByEmbeddingOrGenre(Book book, float[] tasteVector, Map<Long, Double> genreAffinity) {
-        Optional<float[]> bookVector = bookEmbeddingService.getVector(book);
-        return bookVector.isPresent()
-                ? VectorUtils.cosineSimilarity(bookVector.get(), tasteVector)
-                : scoreByGenreOverlap(book, genreAffinity);
     }
 
     private double scoreByGenreOverlap(Book book, Map<Long, Double> genreAffinity) {
