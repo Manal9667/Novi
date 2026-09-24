@@ -21,6 +21,10 @@ public interface UserBookRepository extends JpaRepository<UserBook, Long> {
     List<UserBook> findByUser(User user);
     List<UserBook> findByUserAndStatus(User user, ReadingStatus status);
 
+    // Count-only queries for profile stats, so we don't materialize whole
+    // entity lists just to call size().
+    long countByUserAndStatus(User user, ReadingStatus status);
+
     // Paged variants backing the /library endpoint. The book is fetched
     // eagerly (to-one join, no row multiplication); its authors/genres are
     // batch-loaded via @BatchSize on the collections, avoiding N+1.

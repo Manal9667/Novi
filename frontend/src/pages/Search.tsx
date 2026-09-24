@@ -15,7 +15,7 @@ export default function Search() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get<Page<BookSummary>>('/books', { params: { q: query } });
+      const { data } = await apiClient.get<Page<BookSummary>>('/books/search', { params: { q: query } });
       setResults(data.content);
     } catch (err) {
       setError('Search failed. Please try again.');

@@ -52,8 +52,10 @@ public class RecommendationService {
     }
 
     private List<RecommendationResponse> generate(User user, String query, RecommendationSource source) {
-        // Recompute first so recommendations always reflect the latest ratings/feedback.
-        tasteProfileService.recompute(user);
+        // Recompute only if a taste signal changed since the last profile build,
+        // so recommendations still reflect the latest ratings/feedback without
+        // paying for a full recompute on every request.
+        tasteProfileService.recomputeIfStale(user);
 
         List<ScoredCandidate> candidates = candidateRetrievalService.getCandidates(user);
         List<UserGenreAffinity> genreAffinities = tasteProfileService.getGenreAffinities(user);
@@ -127,8 +129,9 @@ public class RecommendationService {
             }
         }
 
-        // Feedback is itself a taste signal, so future recommendations reflect it immediately.
-        tasteProfileService.recompute(user);
+        // Feedback is itself a taste signal: mark the profile stale so the next
+        // recommendation request reflects it.
+        tasteProfileService.markStale(user);
     }
 
     private String toJson(List<String> reasons) {

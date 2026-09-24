@@ -67,6 +67,10 @@ public class SecurityConfig {
                         // the public GET rule below (it's a POST, so it isn't
                         // matched by that rule, but keep intent explicit).
                         .requestMatchers(HttpMethod.POST, "/api/books/backfill-embeddings").hasRole("ADMIN")
+                        // Live external search imports books (DB writes + outbound
+                        // provider/AI calls), so it must be authenticated. Declared
+                        // before the public GET rule below so it takes precedence.
+                        .requestMatchers(HttpMethod.GET, "/api/books/search").authenticated()
                         // Public book browsing. This also covers the public
                         // GET /api/books/{id}/reviews sub-path; a separate
                         // "/api/books/**/reviews" matcher is invalid because a
@@ -93,7 +97,11 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(securityProperties.getCors().getAllowedOriginPatterns());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        // Auth is carried by the Authorization: Bearer header, not cookies, so we
+        // don't need credentialed CORS. Keeping it false avoids reflecting an
+        // arbitrary origin WITH credentials if allowed-origin-patterns is ever
+        // widened (e.g. to "*") in a deployment.
+        configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

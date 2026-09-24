@@ -41,7 +41,16 @@ public final class VectorUtils {
     /** Element-wise weighted average of several vectors of the same dimension. */
     public static float[] weightedAverage(java.util.List<float[]> vectors, java.util.List<Double> weights) {
         if (vectors.isEmpty()) return null;
-        int dim = vectors.get(0).length;
+        // Determine dimension from the first non-null vector rather than blindly
+        // dereferencing element 0, which could be null.
+        int dim = -1;
+        for (float[] v : vectors) {
+            if (v != null) {
+                dim = v.length;
+                break;
+            }
+        }
+        if (dim <= 0) return null;
         double[] sum = new double[dim];
         double totalWeight = 0;
         for (int i = 0; i < vectors.size(); i++) {

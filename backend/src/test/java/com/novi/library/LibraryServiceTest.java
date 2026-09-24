@@ -31,6 +31,7 @@ class LibraryServiceTest {
     @Mock private UserBookRepository userBookRepository;
     @Mock private BookService bookService;
     @Mock private ReadingHistoryService readingHistoryService;
+    @Mock private com.novi.service.TasteProfileService tasteProfileService;
 
     @InjectMocks
     private LibraryService libraryService;
