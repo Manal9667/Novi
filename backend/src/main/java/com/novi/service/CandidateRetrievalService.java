@@ -36,6 +36,7 @@ public class CandidateRetrievalService {
     private final BookEmbeddingService bookEmbeddingService;
     private final TasteProfileService tasteProfileService;
     private final AiProperties aiProperties;
+    private final PgVectorSupport pgVectorSupport;
 
     public record ScoredCandidate(Book book, double baselineScore) {}
 
@@ -46,8 +47,9 @@ public class CandidateRetrievalService {
 
         Optional<float[]> tasteVector = tasteProfileService.getTasteVector(user);
 
-        // Primary path: index-backed ANN retrieval via pgvector.
-        if (tasteVector.isPresent()) {
+        // Primary path: index-backed ANN retrieval via pgvector, only when the
+        // native vector column is present (otherwise fall through to the scan).
+        if (tasteVector.isPresent() && pgVectorSupport.isAvailable()) {
             List<ScoredCandidate> viaVector = retrieveByVector(tasteVector.get(), ownedBookIds);
             if (!viaVector.isEmpty()) {
                 return viaVector;
