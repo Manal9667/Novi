@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { AxiosError } from 'axios';
-import { apiClient } from '../api/client';
+import { getApiErrorMessage, hasStatus, scanService } from '../services';
 import type {
   ConfirmScanResponse,
   ReadingStatus,
@@ -49,10 +48,9 @@ export default function Scan() {
     setError(null);
     setSummary(null);
     try {
-      const form = new FormData();
-      form.append('image', file);
-      const endpoint = mode === 'book' ? '/scan/book' : '/scan/shelf';
-      const { data } = await apiClient.post<ScanResult>(endpoint, form);
+      const data = mode === 'book'
+        ? await scanService.scanBook(file)
+        : await scanService.scanShelf(file);
       setResult(data);
       // Default: pre-select every confidently matched book as "Want to Read".
       const defaults: Record<number, Selection> = {};
@@ -64,13 +62,12 @@ export default function Scan() {
       });
       setSelections(defaults);
     } catch (err) {
-      const ax = err as AxiosError<{ message?: string }>;
-      if (ax.response?.status === 503) {
+      if (hasStatus(err, 503)) {
         setError(
           'The scanner needs a vision model to be configured on the server (ANTHROPIC_API_KEY). It looks like it is not enabled.'
         );
       } else {
-        setError(ax.response?.data?.message ?? 'Scan failed. Please try another photo.');
+        setError(getApiErrorMessage(err, 'Scan failed. Please try another photo.'));
       }
     } finally {
       setScanning(false);
@@ -109,17 +106,13 @@ export default function Scan() {
         .map((c) => ({
           candidateId: c.id,
           confirm: !!selections[c.id]?.include,
-          status: selections[c.id]?.status ?? 'WANT_TO_READ'
+          status: selections[c.id]?.status ?? ('WANT_TO_READ' as ReadingStatus)
         }));
-      const { data } = await apiClient.post<ConfirmScanResponse>(
-        `/scan/sessions/${result.sessionId}/confirm`,
-        { decisions }
-      );
+      const data = await scanService.confirm(result.sessionId, decisions);
       setSummary(data);
       setResult(null);
     } catch (err) {
-      const ax = err as AxiosError<{ message?: string }>;
-      setError(ax.response?.data?.message ?? 'Could not add the selected books.');
+      setError(getApiErrorMessage(err, 'Could not add the selected books.'));
     } finally {
       setConfirming(false);
     }

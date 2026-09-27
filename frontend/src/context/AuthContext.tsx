@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import { authService } from '../services';
 import type { AuthResponse } from '../types';
 
 interface StoredUser {
@@ -54,17 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function login(username: string, password: string) {
-    const { data } = await apiClient.post<AuthResponse>('/auth/login', { username, password });
+    const data = await authService.login(username, password);
     persistAuth(data);
   }
 
   async function register(username: string, displayName: string, password: string, confirmPassword: string) {
-    const { data } = await apiClient.post<AuthResponse>('/auth/register', {
-      username,
-      displayName,
-      password,
-      confirmPassword
-    });
+    const data = await authService.register({ username, displayName, password, confirmPassword });
     persistAuth(data);
   }
 

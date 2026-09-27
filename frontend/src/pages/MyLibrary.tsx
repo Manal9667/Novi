@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import React, { useState } from 'react';
 import { BookCard } from '../components/BookCard';
-import type { Page, ReadingStatus, UserBook } from '../types';
+import { AsyncSection } from '../components/states/AsyncSection';
+import { EmptyState } from '../components/states/EmptyState';
+import { useAsync } from '../hooks/useAsync';
+import { libraryService } from '../services';
+import type { ReadingStatus, UserBook } from '../types';
 
-const FILTERS: { label: string; value: ReadingStatus | 'ALL' }[] = [
+type Filter = ReadingStatus | 'ALL';
+
+const FILTERS: { label: string; value: Filter }[] = [
   { label: 'All', value: 'ALL' },
   { label: 'Want to Read', value: 'WANT_TO_READ' },
   { label: 'Currently Reading', value: 'CURRENTLY_READING' },
@@ -12,21 +17,24 @@ const FILTERS: { label: string; value: ReadingStatus | 'ALL' }[] = [
 ];
 
 export default function MyLibrary() {
-  const [books, setBooks] = useState<UserBook[]>([]);
-  const [filter, setFilter] = useState<ReadingStatus | 'ALL'>('ALL');
+  const [filter, setFilter] = useState<Filter>('ALL');
 
-  useEffect(() => {
-    const params = filter === 'ALL' ? {} : { status: filter };
-    apiClient.get<Page<UserBook>>('/library', { params }).then((res) => setBooks(res.data.content));
+  const library = useAsync<UserBook[]>(async () => {
+    const page = await libraryService.getLibrary(
+      filter === 'ALL' ? { size: 200 } : { status: filter, size: 200 }
+    );
+    return page.content;
   }, [filter]);
 
   return (
     <div className="page">
       <h1>My Library</h1>
-      <div className="filter-bar">
+      <div className="filter-bar" role="tablist" aria-label="Filter library by reading status">
         {FILTERS.map((f) => (
           <button
             key={f.value}
+            role="tab"
+            aria-selected={filter === f.value}
             className={filter === f.value ? 'active' : ''}
             onClick={() => setFilter(f.value)}
           >
@@ -34,10 +42,26 @@ export default function MyLibrary() {
           </button>
         ))}
       </div>
-      <div className="book-grid">
-        {books.map((ub) => <BookCard key={ub.id} book={ub.book} />)}
-      </div>
-      {books.length === 0 && <p className="subtle">No books in this view yet.</p>}
+
+      <AsyncSection state={library} loadingLabel="Loading your library…">
+        {(books) =>
+          books.length > 0 ? (
+            <div className="book-grid">
+              {books.map((ub) => (
+                <BookCard key={ub.id} book={ub.book} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              message={
+                filter === 'ALL'
+                  ? 'Your library is empty. Search for a book to add your first one.'
+                  : 'No books in this view yet.'
+              }
+            />
+          )
+        }
+      </AsyncSection>
     </div>
   );
 }
