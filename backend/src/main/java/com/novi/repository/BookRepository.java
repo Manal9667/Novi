@@ -47,6 +47,41 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findNearestByTasteVector(@Param("taste") String tasteVectorJson, @Param("k") int k);
 
     /**
+     * Generic index-backed nearest-neighbour retrieval against ANY query vector
+     * (e.g. an embedded natural-language request), not just a user's taste
+     * vector. Same pgvector cosine-distance ANN as {@link #findNearestByTasteVector};
+     * kept as a separate method purely for call-site clarity.
+     */
+    @Query(value = """
+            SELECT * FROM books b
+            WHERE b.embedding_vec IS NOT NULL
+            ORDER BY b.embedding_vec <=> CAST(:vec AS vector)
+            LIMIT :k
+            """, nativeQuery = true)
+    List<Book> findNearestByVector(@Param("vec") String vectorJson, @Param("k") int k);
+
+    /**
+     * Lexical (keyword) retrieval for explicit-query recommendations. Matches a
+     * single {@code %term%} pattern (already lower-cased by the caller) against
+     * the book's title, description, and the names of its authors, genres and
+     * themes. {@code distinct} because the collection joins can multiply rows.
+     * This is what lets a request like "Chinese books" actually surface books
+     * whose metadata mentions "Chinese", independent of the reader's taste.
+     */
+    @Query("""
+            select distinct b from Book b
+            left join b.authors a
+            left join b.genres g
+            left join b.themes t
+            where lower(b.title) like :term
+               or lower(coalesce(b.description, '')) like :term
+               or lower(a.name) like :term
+               or lower(g.name) like :term
+               or lower(t.name) like :term
+            """)
+    List<Book> searchByTerm(@Param("term") String lowercaseLikePattern, Pageable pageable);
+
+    /**
      * Mirrors a book's JSON embedding into the native pgvector column. Native
      * because {@code embedding_vec} is intentionally not mapped on the entity
      * (keeping JPA {@code validate} independent of the vector type).

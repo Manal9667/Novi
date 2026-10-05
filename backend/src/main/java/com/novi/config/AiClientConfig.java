@@ -20,11 +20,10 @@ public class AiClientConfig {
     }
 
     @Bean
-    public RestClient anthropicRestClient() {
+    public RestClient geminiRestClient() {
         return RestClient.builder()
-                .baseUrl(aiProperties.getAnthropic().getBaseUrl())
+                .baseUrl(aiProperties.getGemini().getBaseUrl())
                 .defaultHeader("Content-Type", "application/json")
-                .defaultHeader("anthropic-version", "2023-06-01")
                 .build();
     }
 }

@@ -1,0 +1,4 @@
+# Drop extra root CA certificates (*.cer) here to have them trusted by the
+# backend image at build and runtime. Needed only on networks that do TLS
+# interception (corporate proxy / antivirus web shield). Clean networks need
+# nothing here. The actual .cer files are gitignored.

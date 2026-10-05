@@ -56,24 +56,27 @@ novi:
         trust-forwarded-for: ${AUTH_RATE_LIMIT_TRUST_XFF:false}
 
   ai:
-    # Embeddings: Voyage AI (Anthropic's recommended embedding partner - there
-    # is no native Anthropic embeddings endpoint). Get a key at
-    # https://dashboard.voyageai.com/. Recommendations degrade gracefully
-    # (falling back to genre/author overlap) if this is left blank.
+    # Embeddings: Voyage AI. Get a key at https://dashboard.voyageai.com/.
+    # Optional and independent of Gemini below - recommendations degrade
+    # gracefully (falling back to genre/author overlap) if this is left blank.
     voyage:
       api-key: ${VOYAGE_API_KEY:}
       model: ${VOYAGE_MODEL:voyage-3.5}
       base-url: ${VOYAGE_BASE_URL:https://api.voyageai.com/v1}
 
     # Reranking, explanations, natural-language query interpretation, theme
-    # tagging, and the reading-personality summary all use the Anthropic
-    # Messages API. Without a key, Novi falls back to a deterministic,
-    # non-AI ranking (see RecommendationRerankingService) so the rest of the
-    # app keeps working end-to-end.
-    anthropic:
-      api-key: ${ANTHROPIC_API_KEY:}
-      model: ${ANTHROPIC_MODEL:claude-sonnet-5}
-      base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com/v1}
+    # tagging, the reading-personality summary, and the book-scanner vision all
+    # go through Google Gemini via its OpenAI-compatible endpoint
+    # (.../v1beta/openai). Get a key at https://aistudio.google.com/apikey. The
+    # default model is cheap and vision-capable; override GEMINI_MODEL with any
+    # model from https://ai.google.dev/gemini-api/docs/models. Without a key,
+    # Novi falls back to a deterministic, non-AI ranking (see
+    # RecommendationRerankingService) so the rest of the app keeps working
+    # end-to-end (the scanner, which needs vision, returns a clear 503).
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-3.5-flash-lite}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai}
 
     candidate-pool-size: ${NOVI_CANDIDATE_POOL_SIZE:100}
     recommendation-count: ${NOVI_RECOMMENDATION_COUNT:10}

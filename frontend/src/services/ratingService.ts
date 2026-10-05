@@ -5,12 +5,14 @@ import type { Rating } from '../types';
 export const ratingService = {
   /**
    * The current user's rating for a book, or null if they haven't rated it.
-   * A 404 is an expected "no rating yet" signal, not an error.
+   * The backend signals "no rating yet" with 204 No Content (axios resolves
+   * with an empty body); a 404 is tolerated too for robustness.
    */
   async getMine(bookId: number | string): Promise<Rating | null> {
     try {
-      const { data } = await apiClient.get<Rating>(`/books/${bookId}/ratings/mine`);
-      return data;
+      const res = await apiClient.get<Rating>(`/books/${bookId}/ratings/mine`);
+      if (res.status === 204 || !res.data) return null;
+      return res.data;
     } catch (err) {
       if (hasStatus(err, 404)) return null;
       throw err;

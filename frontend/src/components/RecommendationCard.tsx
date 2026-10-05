@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getApiErrorMessage, recommendationService } from '../services';
 import type { FeedbackType, RecommendationResponse } from '../types';
+import { BookCover } from './BookCover';
 
 const NEGATIVE_REASONS = [
   'Too slow',
@@ -33,49 +34,51 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
   const { book } = recommendation;
 
   return (
-    <div className="recommendation-card">
-      <Link to={`/books/${book.id}`} className="rec-cover">
-        {book.coverImageUrl ? (
-          <img src={book.coverImageUrl} alt={book.title} />
-        ) : (
-          <div className="book-cover-placeholder">{book.title[0]}</div>
-        )}
+    <article className="rec-card">
+      <Link to={`/books/${book.id}`} className="rec-cover" aria-label={book.title}>
+        <BookCover src={book.coverImageUrl} title={book.title} />
+        <span className="match-ribbon" aria-label={`${recommendation.matchPercent}% match`}>
+          {recommendation.matchPercent}%
+        </span>
       </Link>
+
       <div className="rec-body">
-        <div className="rec-header">
-          <Link to={`/books/${book.id}`}>
+        <div>
+          <Link to={`/books/${book.id}`} className="rec-title-link">
             <h3>{book.title}</h3>
           </Link>
-          <span className="match-badge">{recommendation.matchPercent}% Match</span>
+          <p className="subtle rec-authors">{book.authorNames.join(', ')}</p>
         </div>
-        <p className="subtle">{book.authorNames.join(', ')}</p>
 
-        <div className="rec-reasons">
-          <strong>Why:</strong>
-          <ul>
-            {recommendation.reasons.map((reason, i) => (
-              <li key={i}>{reason}</li>
-            ))}
-          </ul>
-          {recommendation.potentialDownside && (
-            <p className="rec-downside">
-              <strong>Potential downside:</strong> {recommendation.potentialDownside}
-            </p>
-          )}
-        </div>
+        {recommendation.reasons.length > 0 && (
+          <div className="rec-note">
+            <span className="rec-note-label hand">Why you'll love it</span>
+            <ul>
+              {recommendation.reasons.map((reason, i) => (
+                <li key={i}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {recommendation.potentialDownside && (
+          <p className="rec-downside">
+            <strong>One heads-up:</strong> {recommendation.potentialDownside}
+          </p>
+        )}
 
         {feedbackGiven ? (
-          <p className="subtle">Thanks for the feedback!</p>
+          <p className="subtle rec-thanks">Thanks — noted for next time. 📖</p>
         ) : (
           <div className="rec-feedback">
-            <button onClick={() => sendFeedback('INTERESTED')} disabled={pending}>
+            <button className="chip btn-sm" onClick={() => sendFeedback('INTERESTED')} disabled={pending}>
               👍 Interested
             </button>
-            <button onClick={() => setShowReasons(!showReasons)} disabled={pending}>
+            <button className="chip btn-sm" onClick={() => setShowReasons((s) => !s)} disabled={pending} aria-expanded={showReasons}>
               👎 Not for me
             </button>
-            <button onClick={() => sendFeedback('ADDED_TO_WANT_TO_READ')} disabled={pending}>
-              📚 Add to Want to Read
+            <button className="chip btn-sm" onClick={() => sendFeedback('ADDED_TO_WANT_TO_READ')} disabled={pending}>
+              📚 Want to read
             </button>
           </div>
         )}
@@ -83,7 +86,7 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
         {showReasons && !feedbackGiven && (
           <div className="rec-negative-reasons">
             {NEGATIVE_REASONS.map((reason) => (
-              <button key={reason} onClick={() => sendFeedback('NOT_FOR_ME', reason)} disabled={pending}>
+              <button key={reason} className="chip chip-sm" onClick={() => sendFeedback('NOT_FOR_ME', reason)} disabled={pending}>
                 {reason}
               </button>
             ))}
@@ -96,6 +99,6 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
           </p>
         )}
       </div>
-    </div>
+    </article>
   );
 }

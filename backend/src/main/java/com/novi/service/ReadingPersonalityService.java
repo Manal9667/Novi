@@ -32,7 +32,7 @@ public class ReadingPersonalityService {
             """;
 
     private final TasteProfileService tasteProfileService;
-    private final AnthropicClient anthropicClient;
+    private final LlmClient llmClient;
 
     @Transactional
     public ReadingPersonalityResponse getReadingPersonality(User user) {
@@ -62,9 +62,9 @@ public class ReadingPersonalityService {
             return "Rate a few books to start building your reading personality.";
         }
 
-        if (anthropicClient.isAvailable()) {
+        if (llmClient.isAvailable()) {
             String prompt = "Genre affinities: " + describe(genres) + "\nTheme affinities: " + describe(themes);
-            var aiSummary = anthropicClient.complete(SYSTEM_PROMPT, prompt, 200);
+            var aiSummary = llmClient.complete(SYSTEM_PROMPT, prompt, 200);
             if (aiSummary.isPresent()) {
                 return aiSummary.get().trim();
             }

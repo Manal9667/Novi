@@ -1,0 +1,375 @@
+/* ============================================================================
+   Shared components. Semantic, reusable, theme-aware.
+   ============================================================================ */
+
+/* ------------------------------- Buttons ---------------------------------- */
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+/* Default pill button == primary (walnut). Pages use bare <button> freely. */
+button:not(.link-button):not(.icon-button):not(.tab):not(.chip):not(.unstyled),
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 0.65rem 1.25rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  line-height: 1.2;
+  transition: transform var(--dur-fast) var(--ease-cozy), background var(--dur-fast) var(--ease-cozy),
+    box-shadow var(--dur-fast) var(--ease-cozy);
+}
+button:not(.link-button):not(.icon-button):not(.tab):not(.chip):not(.unstyled):hover,
+.btn:hover {
+  background: var(--primary-strong);
+  box-shadow: var(--shadow-sm);
+}
+button:not(.link-button):not(.icon-button):not(.tab):not(.chip):not(.unstyled):active,
+.btn:active { transform: translateY(1px); }
+button:disabled { opacity: 0.55; cursor: default; box-shadow: none; }
+
+/* Secondary / ghost variants (class on the button) */
+button.secondary, .btn-secondary {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--border-strong);
+}
+:root[data-theme='night'] button.secondary,
+:root[data-theme='night'] .btn-secondary { color: var(--text); }
+button.secondary:hover, .btn-secondary:hover {
+  background: var(--surface-sunk);
+  box-shadow: none;
+}
+.btn-accent { background: var(--accent) !important; color: #fff !important; }
+.btn-accent:hover { background: var(--accent-strong) !important; }
+.btn-sm { padding: 0.4rem 0.85rem; font-size: var(--fs-sm); }
+
+/* Text / link-style buttons */
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: inherit;
+  font-family: inherit;
+}
+.link-button:hover { color: var(--accent-strong); text-decoration: underline; }
+
+/* Anchor styled as a button (used on landing / error boundary) */
+.button-link, .secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.7rem 1.4rem;
+  border-radius: var(--r-pill);
+  text-decoration: none;
+  font-weight: 500;
+  background: var(--primary);
+  color: var(--on-primary);
+  transition: background var(--dur-fast) var(--ease-cozy), transform var(--dur-fast) var(--ease-cozy);
+}
+.button-link:hover { background: var(--primary-strong); color: var(--on-primary); transform: translateY(-1px); }
+.button-link.secondary, .secondary-link {
+  background: transparent;
+  color: var(--primary);
+  border: 1.5px solid var(--border-strong);
+}
+:root[data-theme='night'] .button-link.secondary,
+:root[data-theme='night'] .secondary-link { color: var(--text); }
+
+/* Round icon button (nav, toggles) */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: inherit;
+  transition: background var(--dur-fast) var(--ease-cozy);
+}
+.icon-button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* --------------------------------- Cards ---------------------------------- */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.card-pad { padding: var(--sp-5); }
+
+/* ------------------------------ Book cover -------------------------------- */
+/* A physical-feeling cover: spine shading on the left, soft drop shadow, lift. */
+.book-cover-img, .book-cover-fallback {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 3px 6px 6px 3px;
+  box-shadow: var(--shadow-book);
+  position: relative;
+}
+.book-cover-img { object-fit: cover; display: block; background: var(--surface-sunk); }
+.book-cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  background: linear-gradient(135deg, var(--primary), var(--accent-strong));
+  text-align: center;
+  padding: var(--sp-3);
+}
+/* spine sheen */
+.book-cover {
+  position: relative;
+  display: block;
+}
+.book-cover::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 9px;
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ------------------------------ Book card --------------------------------- */
+.book-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--text);
+}
+.book-card .book-cover { transition: transform var(--dur) var(--ease-cozy); }
+.book-card:hover .book-cover { transform: translateY(-6px) rotate(-0.5deg); }
+.book-card:hover .book-cover-img, .book-card:hover .book-cover-fallback { box-shadow: var(--shadow-lg); }
+.book-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.book-authors { font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* --------------------------------- Chips ---------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  transition: border-color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast);
+}
+.chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.chip:disabled { opacity: 0.5; }
+.chip-static { cursor: default; }
+.chip-static:hover { transform: none; border-color: var(--border-strong); }
+
+/* Sticky-note chip (handwritten example prompts) */
+.sticky {
+  font-family: var(--font-hand);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  padding: 0.6rem 0.9rem;
+  border: none;
+  border-radius: 3px;
+  background: var(--secondary-soft);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-fast) var(--ease-cozy), box-shadow var(--dur-fast);
+}
+.sticky:nth-child(2n) { background: var(--accent-soft); transform: rotate(-1.2deg); }
+.sticky:nth-child(3n) { transform: rotate(1deg); }
+.sticky:hover { transform: translateY(-2px) rotate(0deg); box-shadow: var(--shadow-md); }
+
+/* --------------------------- Tabs (book-edge) ----------------------------- */
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: var(--sp-5);
+}
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.5rem 0.9rem;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  margin-bottom: -2px;
+  transition: color var(--dur-fast), border-color var(--dur-fast);
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected='true'], .tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --------------------------- Segmented control ---------------------------- */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+  background: var(--surface-sunk);
+  border-radius: var(--r-pill);
+}
+.segmented button {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: none !important;
+  padding: 0.45rem 0.95rem !important;
+  border-radius: var(--r-pill) !important;
+  font-size: var(--fs-sm) !important;
+  box-shadow: none !important;
+}
+.segmented button.active, .segmented button[aria-pressed='true'] {
+  background: var(--surface-raised) !important;
+  color: var(--accent) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* --------------------------------- Modal ---------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--primary-strong) 55%, transparent);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  z-index: 100;
+  animation: fade-in var(--dur) var(--ease-cozy);
+}
+.modal {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-5);
+  max-width: 420px;
+  width: 100%;
+  animation: pop-in var(--dur) var(--ease-cozy);
+}
+.modal h2 { margin-bottom: var(--sp-2); }
+.modal-actions { display: flex; gap: var(--sp-3); justify-content: flex-end; margin-top: var(--sp-5); }
+
+/* -------------------------------- Skeletons ------------------------------- */
+.skeleton {
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 50%, var(--skeleton-base) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--r-sm);
+}
+.skeleton-cover { aspect-ratio: 2 / 3; border-radius: 3px 6px 6px 3px; width: 100%; }
+.skeleton-line { height: 0.7rem; margin-top: 0.5rem; }
+.skeleton-line.short { width: 60%; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-5) var(--sp-4); }
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------- State panels -------------------------------- */
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--text-muted);
+  padding: var(--sp-5) 0;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2.5px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-5);
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+}
+.empty-state .illo, .error-state .illo { width: min(220px, 70%); height: auto; color: var(--primary); opacity: 0.9; }
+.empty-state h3 { font-size: var(--fs-lg); }
+.empty-state p, .error-state p { color: var(--text-muted); max-width: 42ch; }
+.error-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; justify-content: center; }
+
+/* -------------------------------- Shelf ----------------------------------- */
+/* A wooden shelf with books standing on it. */
+.shelf { margin-bottom: var(--sp-6); }
+.shelf-books {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-end;
+  overflow-x: auto;
+  padding: var(--sp-4) var(--sp-2) 0;
+  scrollbar-width: thin;
+}
+.shelf-plank {
+  height: 14px;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  background: linear-gradient(var(--border-strong), color-mix(in srgb, var(--primary) 55%, var(--border-strong)));
+  box-shadow: var(--shadow-md);
+}
+.shelf .book-card { width: 118px; flex: 0 0 auto; }
+
+/* star rating — warm gold with a gentle fill */
+.star-rating { display: inline-flex; gap: 3px; }
+.star {
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--border-strong);
+  background: none;
+  border: none;
+  padding: 0 1px;
+  transition: transform var(--dur-fast) var(--ease-cozy), color var(--dur-fast);
+}
+.star.filled { color: var(--gold); }
+.star.interactive { cursor: pointer; }
+.star.interactive:hover { transform: scale(1.18) rotate(-6deg); color: var(--gold); }
+
+/* generic toast */
+.toast-stack { position: fixed; bottom: calc(72px + var(--sp-3)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--sp-2); z-index: 200; }
+@media (min-width: 720px) { .toast-stack { bottom: var(--sp-5); } }
+.toast {
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-3) var(--sp-4);
+  animation: pop-in var(--dur) var(--ease-cozy);
+}

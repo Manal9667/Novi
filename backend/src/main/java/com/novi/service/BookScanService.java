@@ -152,7 +152,7 @@ public class BookScanService {
     private void requireVision() {
         if (!visionService.isAvailable()) {
             throw new ServiceUnavailableException(
-                    "The book scanner requires a vision model to be configured. Set ANTHROPIC_API_KEY to enable it.");
+                    "The book scanner requires a vision model to be configured. Set GEMINI_API_KEY to enable it.");
         }
     }
 

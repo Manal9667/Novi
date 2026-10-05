@@ -31,14 +31,14 @@ public class BookThemeTaggingService {
             Example: ["Political intrigue", "Coming of age", "Betrayal"]
             """;
 
-    private final AnthropicClient anthropicClient;
+    private final LlmClient llmClient;
     private final ThemeRepository themeRepository;
     private final BookRepository bookRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public void ensureThemes(Book book) {
-        if (!book.getThemes().isEmpty() || !anthropicClient.isAvailable()) {
+        if (!book.getThemes().isEmpty() || !llmClient.isAvailable()) {
             return;
         }
         if (book.getDescription() == null || book.getDescription().isBlank()) {
@@ -49,9 +49,9 @@ public class BookThemeTaggingService {
                 + "\nGenres: " + book.getGenres().stream().map(g -> g.getName()).reduce((a, b) -> a + ", " + b).orElse("")
                 + "\nDescription: " + book.getDescription();
 
-        anthropicClient.complete(SYSTEM_PROMPT, prompt, 300).ifPresent(raw -> {
+        llmClient.complete(SYSTEM_PROMPT, prompt, 300).ifPresent(raw -> {
             try {
-                JsonNode array = objectMapper.readTree(AnthropicClient.stripJsonFences(raw));
+                JsonNode array = objectMapper.readTree(LlmClient.stripJsonFences(raw));
                 if (!array.isArray()) return;
 
                 for (JsonNode node : array) {

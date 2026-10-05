@@ -3,3 +3,5 @@ target/
 *.iml
 .env
 norton-root.cer
+# Extra root CA certs for TLS-intercepting networks: keep the folder, ignore the certs.
+certs/*.cer

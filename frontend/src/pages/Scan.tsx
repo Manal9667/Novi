@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BookCover } from '../components/BookCover';
 import { getApiErrorMessage, hasStatus, scanService } from '../services';
 import type {
   ConfirmScanResponse,
@@ -32,6 +33,13 @@ export default function Scan() {
     [result]
   );
 
+  // Revoke the preview object URL when it changes or on unmount so each picked
+  // file doesn't leak a blob URL for the lifetime of the page.
+  useEffect(() => {
+    if (!preview) return;
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null;
     setFile(selected);
@@ -64,7 +72,7 @@ export default function Scan() {
     } catch (err) {
       if (hasStatus(err, 503)) {
         setError(
-          'The scanner needs a vision model to be configured on the server (ANTHROPIC_API_KEY). It looks like it is not enabled.'
+          'The scanner needs a vision model to be configured on the server (GEMINI_API_KEY). It looks like it is not enabled.'
         );
       } else {
         setError(getApiErrorMessage(err, 'Scan failed. Please try another photo.'));
@@ -187,13 +195,10 @@ export default function Scan() {
               return (
                 <li key={c.id} className="scan-candidate">
                   <div className="scan-cover">
-                    {c.matchedBook?.coverImageUrl ? (
-                      <img src={c.matchedBook.coverImageUrl} alt={c.matchedBook.title} />
-                    ) : (
-                      <div className="book-cover-placeholder">
-                        {(c.matchedBook?.title ?? c.detectedTitle ?? '?')[0]}
-                      </div>
-                    )}
+                    <BookCover
+                      src={c.matchedBook?.coverImageUrl}
+                      title={c.matchedBook?.title ?? c.detectedTitle ?? '?'}
+                    />
                   </div>
                   <div className="scan-candidate-body">
                     {c.matchedBook ? (

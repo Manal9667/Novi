@@ -2,7 +2,7 @@ package com.novi.recommendation;
 
 import com.novi.config.AiProperties;
 import com.novi.entity.Book;
-import com.novi.service.AnthropicClient;
+import com.novi.service.LlmClient;
 import com.novi.service.CandidateRetrievalService.ScoredCandidate;
 import com.novi.service.RecommendationRerankingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RecommendationRerankingServiceTest {
 
-    @Mock private AnthropicClient anthropicClient;
+    @Mock private LlmClient llmClient;
     @Mock private AiProperties aiProperties;
 
     @InjectMocks
@@ -34,8 +34,8 @@ class RecommendationRerankingServiceTest {
     }
 
     @Test
-    void rerank_whenAnthropicUnavailable_fallsBackToBaselineScoreOrdering() {
-        when(anthropicClient.isAvailable()).thenReturn(false);
+    void rerank_whenLlmUnavailable_fallsBackToBaselineScoreOrdering() {
+        when(llmClient.isAvailable()).thenReturn(false);
         when(aiProperties.getRecommendationCount()).thenReturn(10);
 
         Book lowScoreBook = Book.builder().id(1L).title("Low Match").build();

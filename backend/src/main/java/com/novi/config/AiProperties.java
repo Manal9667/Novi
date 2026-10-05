@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class AiProperties {
 
     private Voyage voyage = new Voyage();
-    private Anthropic anthropic = new Anthropic();
+    private Gemini gemini = new Gemini();
     private int candidatePoolSize = 100;
     private int recommendationCount = 10;
     /**
@@ -34,7 +34,12 @@ public class AiProperties {
         public boolean isConfigured() { return apiKey != null && !apiKey.isBlank(); }
     }
 
-    public static class Anthropic {
+    /**
+     * Google Gemini (https://ai.google.dev) backs all of Novi's reasoning +
+     * vision features through the Generative Language API. Left blank, every AI
+     * feature degrades gracefully to a non-AI fallback.
+     */
+    public static class Gemini {
         private String apiKey;
         private String model;
         private String baseUrl;
@@ -50,8 +55,8 @@ public class AiProperties {
 
     public Voyage getVoyage() { return voyage; }
     public void setVoyage(Voyage voyage) { this.voyage = voyage; }
-    public Anthropic getAnthropic() { return anthropic; }
-    public void setAnthropic(Anthropic anthropic) { this.anthropic = anthropic; }
+    public Gemini getGemini() { return gemini; }
+    public void setGemini(Gemini gemini) { this.gemini = gemini; }
     public int getCandidatePoolSize() { return candidatePoolSize; }
     public void setCandidatePoolSize(int candidatePoolSize) { this.candidatePoolSize = candidatePoolSize; }
     public int getRecommendationCount() { return recommendationCount; }

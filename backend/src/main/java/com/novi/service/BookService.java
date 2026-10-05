@@ -140,6 +140,37 @@ public class BookService {
                 });
     }
 
+    /**
+     * Resolves an AI-suggested (title, author) against the external provider and
+     * imports the best match - the grounding step that keeps LLM book
+     * suggestions honest. Returns empty if no Open Library result's title is a
+     * close enough match, so a hallucinated title can't surface as a real book.
+     */
+    @Transactional
+    public java.util.Optional<Book> importByTitleAuthor(String title, String author) {
+        if (title == null || title.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        String queryText = author == null || author.isBlank() ? title : title + " " + author;
+        List<OpenLibraryService.ExternalBook> results = openLibraryService.search(queryText, 5);
+
+        OpenLibraryService.ExternalBook best = null;
+        double bestScore = 0.0;
+        for (OpenLibraryService.ExternalBook e : results) {
+            double score = TextSimilarity.ratio(title, e.title());
+            if (score > bestScore) {
+                bestScore = score;
+                best = e;
+            }
+        }
+        // Require a reasonably close title match so we don't import an unrelated
+        // book for a title the model may have invented or mis-stated.
+        if (best == null || bestScore < 0.6) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(importIfNeeded(best));
+    }
+
     @Transactional(readOnly = true)
     public BookResponse getById(Long id) {
         Book book = bookRepository.findById(id)

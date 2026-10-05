@@ -4,9 +4,11 @@ import com.novi.dto.recommendation.FeedbackRequest;
 import com.novi.dto.recommendation.NaturalLanguageRequest;
 import com.novi.dto.recommendation.ReadingPersonalityResponse;
 import com.novi.dto.recommendation.RecommendationResponse;
+import com.novi.dto.wrapped.WrappedResponse;
 import com.novi.security.CurrentUserProvider;
 import com.novi.service.ReadingPersonalityService;
 import com.novi.service.RecommendationService;
+import com.novi.service.WrappedService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ public class RecommendationController {
 
     private final RecommendationService recommendationService;
     private final ReadingPersonalityService readingPersonalityService;
+    private final WrappedService wrappedService;
     private final CurrentUserProvider currentUserProvider;
 
     /** Personalized recommendations generated from the user's full reading profile. */
@@ -43,5 +46,11 @@ public class RecommendationController {
     @GetMapping("/reading-personality")
     public ReadingPersonalityResponse getReadingPersonality() {
         return readingPersonalityService.getReadingPersonality(currentUserProvider.getCurrentUser());
+    }
+
+    /** "Novi Wrapped": a Spotify-Wrapped-style summary of the reader's real activity. */
+    @GetMapping("/wrapped")
+    public WrappedResponse getWrapped() {
+        return wrappedService.getWrapped(currentUserProvider.getCurrentUser());
     }
 }

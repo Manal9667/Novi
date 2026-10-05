@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { BookCard } from '../components/BookCard';
+import { Shelf as ShelfRow } from '../components/Shelf';
+import { Modal } from '../components/Modal';
 import { AsyncSection } from '../components/states/AsyncSection';
 import { EmptyState } from '../components/states/EmptyState';
+import { EmptyShelfIllustration } from '../components/icons';
 import { useAsync } from '../hooks/useAsync';
 import { getApiErrorMessage, shelfService } from '../services';
 import type { Shelf } from '../types';
@@ -10,6 +12,7 @@ export default function MyShelves() {
   const [newShelfName, setNewShelfName] = useState('');
   const [mutating, setMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Shelf | null>(null);
 
   const shelves = useAsync<Shelf[]>(() => shelfService.getAll(), []);
 
@@ -30,10 +33,13 @@ export default function MyShelves() {
     }
   }
 
-  async function handleDelete(shelfId: number) {
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const shelf = pendingDelete;
+    setPendingDelete(null);
     setActionError(null);
     try {
-      await shelfService.remove(shelfId);
+      await shelfService.remove(shelf.id);
       shelves.reload();
     } catch (err) {
       setActionError(getApiErrorMessage(err, 'Could not delete that shelf.'));
@@ -42,54 +48,60 @@ export default function MyShelves() {
 
   return (
     <div className="page">
-      <h1>My Shelves</h1>
-      <form onSubmit={handleCreate} className="inline-form">
-        <label htmlFor="new-shelf" className="visually-hidden">
-          New shelf name
-        </label>
+      <h1>My shelves</h1>
+      <p className="subtle">Group your books however you like — "Favourites", "2026 reads", "Comfort rereads".</p>
+
+      <form onSubmit={handleCreate} className="shelf-create">
+        <label htmlFor="new-shelf" className="visually-hidden">New shelf name</label>
         <input
           id="new-shelf"
-          placeholder="New shelf name (e.g. Favorites)"
+          placeholder="Name a new shelf…"
           value={newShelfName}
           onChange={(e) => setNewShelfName(e.target.value)}
           maxLength={100}
         />
-        <button type="submit" disabled={mutating}>
-          {mutating ? 'Creating…' : 'Create shelf'}
-        </button>
+        <button type="submit" disabled={mutating}>{mutating ? 'Building…' : 'Add shelf'}</button>
       </form>
 
-      {actionError && <p className="form-error">{actionError}</p>}
+      {actionError && <p className="form-error" role="alert">{actionError}</p>}
 
-      <AsyncSection state={shelves} loadingLabel="Loading your shelves…">
+      <AsyncSection state={shelves} loadingLabel="Dusting off your shelves…">
         {(list) =>
           list.length > 0 ? (
-            <>
+            <div className="shelf-stack">
               {list.map((shelf) => (
-                <section key={shelf.id} className="shelf">
-                  <div className="shelf-header">
+                <section key={shelf.id} className="shelf-section">
+                  <div className="shelf-section-header">
                     <h2>{shelf.name}</h2>
-                    <button className="link-button" onClick={() => handleDelete(shelf.id)}>
-                      Delete shelf
-                    </button>
+                    <button className="link-button" onClick={() => setPendingDelete(shelf)}>Remove shelf</button>
                   </div>
-                  {shelf.books.length > 0 ? (
-                    <div className="book-grid">
-                      {shelf.books.map((book) => (
-                        <BookCard key={book.id} book={book} />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="subtle">No books on this shelf yet.</p>
-                  )}
+                  <ShelfRow
+                    books={shelf.books}
+                    empty={<p className="subtle shelf-empty">This shelf is waiting for its first book.</p>}
+                  />
                 </section>
               ))}
-            </>
+            </div>
           ) : (
-            <EmptyState message="You haven't created any shelves yet. Make one above to organize your books." />
+            <EmptyState
+              illustration={<EmptyShelfIllustration className="illo" />}
+              title="No shelves yet"
+              message="Make your first shelf above to start arranging your books by mood, year, or whatever feels right."
+            />
           )
         }
       </AsyncSection>
+
+      <Modal
+        open={!!pendingDelete}
+        title={`Remove "${pendingDelete?.name}"?`}
+        confirmLabel="Remove shelf"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      >
+        This removes the shelf and its arrangement. Your books stay safely in your library.
+      </Modal>
     </div>
   );
 }

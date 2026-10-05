@@ -6,9 +6,13 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "reviews", indexes = {
-        @Index(name = "idx_reviews_book", columnList = "book_id")
-})
+@Table(name = "reviews",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_reviews_user_book", columnNames = {"user_id", "book_id"})
+        },
+        indexes = {
+                @Index(name = "idx_reviews_book", columnList = "book_id")
+        })
 @Getter
 @Setter
 @NoArgsConstructor

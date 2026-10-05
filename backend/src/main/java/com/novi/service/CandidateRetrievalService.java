@@ -34,16 +34,27 @@ public class CandidateRetrievalService {
     private final BookRepository bookRepository;
     private final UserBookRepository userBookRepository;
     private final BookEmbeddingService bookEmbeddingService;
+    private final EmbeddingService embeddingService;
     private final TasteProfileService tasteProfileService;
     private final AiProperties aiProperties;
     private final PgVectorSupport pgVectorSupport;
 
+    // For "Find Your Next Read", a candidate's relevance blends semantic
+    // similarity to the request with how many of the request's concrete terms
+    // its metadata matches. Semantic is weighted a little higher when present.
+    private static final double SEMANTIC_WEIGHT = 0.6;
+    private static final double LEXICAL_WEIGHT = 0.4;
+    private static final int PER_TERM_LIMIT = 40;
+
     public record ScoredCandidate(Book book, double baselineScore) {}
 
+    /**
+     * "Recommended for You" retrieval: a candidate pool selected purely from the
+     * reader's long-term taste (taste vector ANN, or genre-affinity overlap).
+     * No explicit query is involved - this is the personalized mode.
+     */
     public List<ScoredCandidate> getCandidates(User user) {
-        Set<Long> ownedBookIds = userBookRepository.findByUser(user).stream()
-                .map(ub -> ub.getBook().getId())
-                .collect(Collectors.toSet());
+        Set<Long> ownedBookIds = ownedBookIds(user);
 
         Optional<float[]> tasteVector = tasteProfileService.getTasteVector(user);
 
@@ -105,5 +116,108 @@ public class CandidateRetrievalService {
             sum += genreAffinity.getOrDefault(g.getId(), 0.5); // 0.5 = neutral prior for an unseen genre
         }
         return sum / book.getGenres().size();
+    }
+
+    /**
+     * "Find Your Next Read" retrieval: a candidate pool selected by RELEVANCE TO
+     * THE REQUEST, not the reader's taste. This is the fix for over-personalized
+     * explicit queries - a request like "Chinese books" must retrieve books that
+     * actually match "Chinese", regardless of what the reader usually reads.
+     *
+     * <p>Hybrid retrieval:
+     * <ol>
+     *   <li>Semantic - embed the (intent-expanded) request and ANN-search the
+     *       catalog via pgvector (when embeddings are configured).</li>
+     *   <li>Lexical - one keyword search per concrete intent term against
+     *       title/description/author/genre/theme; matching more terms scores
+     *       higher.</li>
+     *   <li>Raw-query fallback - if nothing matched (e.g. no embeddings and no
+     *       extracted terms), search the raw query text directly.</li>
+     * </ol>
+     * The reader's own books are always excluded. Personalization is applied
+     * later, in the reranker, only as a secondary tie-breaker.
+     */
+    public List<ScoredCandidate> getQueryCandidates(User user, QueryIntent intent, String rawQuery) {
+        return getQueryCandidates(user, intent, rawQuery, List.of());
+    }
+
+    /**
+     * Same as {@link #getQueryCandidates(User, QueryIntent, String)} but with a
+     * set of seed books - typically LLM-suggested titles already resolved and
+     * imported from the metadata provider - which are injected as strong,
+     * query-relevant candidates (the model named them specifically for this
+     * request). They're merged with the semantic/lexical results and the
+     * reranker makes the final call.
+     */
+    public List<ScoredCandidate> getQueryCandidates(User user, QueryIntent intent, String rawQuery, List<Book> seedBooks) {
+        Set<Long> ownedBookIds = ownedBookIds(user);
+        int poolSize = aiProperties.getCandidatePoolSize();
+
+        Map<Long, Double> scoreById = new HashMap<>();
+        Map<Long, Book> bookById = new HashMap<>();
+
+        // 0. AI-suggested, provider-grounded books: strongest signal, since the
+        //    model named them specifically to satisfy this request.
+        for (Book b : seedBooks) {
+            if (b != null && !ownedBookIds.contains(b.getId())) {
+                accumulate(scoreById, bookById, b, 1.0);
+            }
+        }
+
+        // 1. Semantic retrieval against the embedded request.
+        if (embeddingService.isAvailable() && pgVectorSupport.isAvailable()) {
+            embeddingService.embed(intent.expandedQueryText(rawQuery)).ifPresent(queryVec -> {
+                List<Book> nearest = bookRepository.findNearestByVector(
+                        VectorUtils.toJson(queryVec), poolSize + ownedBookIds.size());
+                for (Book b : nearest) {
+                    if (ownedBookIds.contains(b.getId())) continue;
+                    double sim = bookEmbeddingService.getVector(b)
+                            .map(v -> VectorUtils.cosineSimilarity(v, queryVec))
+                            .orElse(0.0);
+                    accumulate(scoreById, bookById, b, SEMANTIC_WEIGHT * Math.max(0.0, sim));
+                }
+            });
+        }
+
+        // 2. Lexical retrieval: one search per concrete request term.
+        List<String> terms = intent.retrievalTerms();
+        if (!terms.isEmpty()) {
+            Pageable limit = PageRequest.of(0, PER_TERM_LIMIT);
+            double maxTerms = terms.size();
+            for (String term : terms) {
+                String pattern = "%" + term.toLowerCase(Locale.ROOT) + "%";
+                for (Book b : bookRepository.searchByTerm(pattern, limit)) {
+                    if (ownedBookIds.contains(b.getId())) continue;
+                    accumulate(scoreById, bookById, b, LEXICAL_WEIGHT * (1.0 / maxTerms));
+                }
+            }
+        }
+
+        // 3. Raw-query fallback when neither path produced anything.
+        if (bookById.isEmpty() && rawQuery != null && !rawQuery.isBlank()) {
+            Pageable limit = PageRequest.of(0, poolSize);
+            String pattern = "%" + rawQuery.toLowerCase(Locale.ROOT) + "%";
+            for (Book b : bookRepository.searchByTerm(pattern, limit)) {
+                if (ownedBookIds.contains(b.getId())) continue;
+                accumulate(scoreById, bookById, b, 0.5);
+            }
+        }
+
+        return scoreById.entrySet().stream()
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(poolSize)
+                .map(e -> new ScoredCandidate(bookById.get(e.getKey()), e.getValue()))
+                .toList();
+    }
+
+    private void accumulate(Map<Long, Double> scoreById, Map<Long, Book> bookById, Book book, double delta) {
+        bookById.putIfAbsent(book.getId(), book);
+        scoreById.merge(book.getId(), delta, Double::sum);
+    }
+
+    private Set<Long> ownedBookIds(User user) {
+        return userBookRepository.findByUser(user).stream()
+                .map(ub -> ub.getBook().getId())
+                .collect(Collectors.toSet());
     }
 }

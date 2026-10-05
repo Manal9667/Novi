@@ -1,0 +1,6 @@
+=== 'The Poppy War' (not previously in catalog) ===
+results: 4
+   - The Poppy War [100%] The exact book requested by the reader
+   - The Poppy War / The Dragon Republic / The Burning God [95%] Contains the requested book as part of the complete trilogy collection
+   - The Dragon Republic [90%] Direct sequel to The Poppy War continuing the protagonist's journey
+   - THE POPPY WAR [80%] Matches the title of the requested book

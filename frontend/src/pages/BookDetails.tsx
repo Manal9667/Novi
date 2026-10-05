@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { StarRating } from '../components/StarRating';
+import { BookCover } from '../components/BookCover';
 import { AsyncSection } from '../components/states/AsyncSection';
 import { useAsync } from '../hooks/useAsync';
 import {
@@ -23,8 +24,8 @@ interface BookBundle {
 
 const STATUS_BUTTONS: { label: string; value: ReadingStatus }[] = [
   { label: 'Want to Read', value: 'WANT_TO_READ' },
-  { label: 'Currently Reading', value: 'CURRENTLY_READING' },
-  { label: 'Mark as Read', value: 'READ' },
+  { label: 'Reading', value: 'CURRENTLY_READING' },
+  { label: 'Read', value: 'READ' },
   { label: 'DNF', value: 'DNF' }
 ];
 
@@ -40,17 +41,11 @@ export default function BookDetails() {
       libraryService.getLibrary({ size: 200 })
     ]);
     const entry = library.content.find((ub) => ub.book.id === Number(id));
-    return {
-      book,
-      reviews,
-      myRating,
-      inLibrary: !!entry,
-      status: entry?.status ?? null
-    };
+    return { book, reviews, myRating, inLibrary: !!entry, status: entry?.status ?? null };
   }, [id]);
 
-  // Local, mutable copies seeded from the loaded bundle so mutations reflect
-  // immediately without a full refetch.
+  // Local, mutable copies seeded from the bundle so mutations reflect at once.
+  const [bookDetail, setBookDetail] = useState<BookDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [myRating, setMyRating] = useState<Rating | null>(null);
   const [status, setStatus] = useState<ReadingStatus | null>(null);
@@ -61,6 +56,7 @@ export default function BookDetails() {
 
   useEffect(() => {
     if (bundleState.data) {
+      setBookDetail(bundleState.data.book);
       setReviews(bundleState.data.reviews);
       setMyRating(bundleState.data.myRating);
       setStatus(bundleState.data.status);
@@ -80,8 +76,6 @@ export default function BookDetails() {
       }
       setStatus(newStatus);
     } catch (err) {
-      // The book may already be in the library (e.g. added in another tab):
-      // fall back to a status update rather than failing on the duplicate.
       if (hasStatus(err, 409)) {
         try {
           await libraryService.updateStatus(id, newStatus);
@@ -102,6 +96,11 @@ export default function BookDetails() {
     setActionError(null);
     try {
       setMyRating(await ratingService.rate(id, stars));
+      try {
+        setBookDetail(await bookService.getById(id));
+      } catch {
+        /* keep the previous aggregate if the refresh fails */
+      }
     } catch (err) {
       setActionError(getApiErrorMessage(err, 'Could not save your rating.'));
     }
@@ -126,80 +125,94 @@ export default function BookDetails() {
 
   return (
     <div className="page book-details">
-      <AsyncSection state={bundleState} loadingLabel="Loading book…">
-        {({ book }) => (
-          <>
-            <div className="book-details-header">
-              {book.coverImageUrl && (
-                <img src={book.coverImageUrl} alt={book.title} className="book-details-cover" />
-              )}
-              <div>
-                <h1>{book.title}</h1>
-                <p className="subtle">{book.authors.map((a) => a.name).join(', ')}</p>
-                <p>{book.genres.map((g) => g.name).join(' · ')}</p>
-                {book.averageRating != null && (
-                  <p>
-                    Average rating: {book.averageRating.toFixed(1)} ({book.ratingCount} ratings)
-                  </p>
-                )}
-                {book.description && <p>{book.description}</p>}
-
-                <div className="library-controls">
-                  {STATUS_BUTTONS.map((b) => (
-                    <button
-                      key={b.value}
-                      className={status === b.value ? 'active' : ''}
-                      aria-pressed={status === b.value}
-                      onClick={() => handleSetStatus(b.value)}
-                    >
-                      {b.label}
-                    </button>
-                  ))}
+      <AsyncSection state={bundleState} loadingLabel="Finding this book…">
+        {({ book: bundleBook }) => {
+          const book = bookDetail ?? bundleBook;
+          return (
+            <>
+              <div className="book-hero">
+                <div className="book-hero-cover">
+                  <BookCover src={book.coverImageUrl} title={book.title} />
                 </div>
 
-                <div>
-                  <p id="your-rating-label">Your rating:</p>
-                  <StarRating value={myRating?.stars || 0} onChange={handleRate} />
-                </div>
+                <div className="book-hero-info">
+                  <h1>{book.title}</h1>
+                  <p className="book-byline">{book.authors.map((a) => a.name).join(', ')}</p>
 
-                {actionError && (
-                  <p className="form-error" role="alert">
-                    {actionError}
-                  </p>
-                )}
-              </div>
-            </div>
+                  {book.genres.length > 0 && (
+                    <div className="book-genres">
+                      {book.genres.map((g) => (
+                        <span key={g.id} className="chip chip-static">{g.name}</span>
+                      ))}
+                    </div>
+                  )}
 
-            <section className="reviews-section">
-              <h2>Reviews</h2>
-              <form onSubmit={handleSubmitReview} className="review-form">
-                <label htmlFor="review-text" className="visually-hidden">
-                  Write a review
-                </label>
-                <textarea
-                  id="review-text"
-                  placeholder="Write a review…"
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  maxLength={5000}
-                />
-                <button type="submit" disabled={savingReview || !reviewText.trim()}>
-                  {savingReview ? 'Posting…' : 'Post review'}
-                </button>
-              </form>
-              {reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <div key={review.id} className="review">
-                    <strong>{review.displayName}</strong>
-                    <p>{review.content}</p>
+                  {book.averageRating != null && (
+                    <p className="book-aggregate">
+                      <StarRating value={Math.round(book.averageRating)} readOnly />
+                      <span>{book.averageRating.toFixed(1)} · {book.ratingCount} {book.ratingCount === 1 ? 'rating' : 'ratings'}</span>
+                    </p>
+                  )}
+
+                  {book.description && <p className="book-description measure">{book.description}</p>}
+
+                  <div className="book-actions">
+                    <span className="book-actions-label">On your shelf</span>
+                    <div className="segmented" role="group" aria-label="Set reading status">
+                      {STATUS_BUTTONS.map((b) => (
+                        <button
+                          key={b.value}
+                          className={status === b.value ? 'active' : ''}
+                          aria-pressed={status === b.value}
+                          onClick={() => handleSetStatus(b.value)}
+                        >
+                          {b.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="subtle">No reviews yet. Be the first to share your thoughts.</p>
-              )}
-            </section>
-          </>
-        )}
+
+                  <div className="book-rate">
+                    <span id="your-rating-label" className="book-actions-label">Your rating</span>
+                    <StarRating value={myRating?.stars || 0} onChange={handleRate} />
+                  </div>
+
+                  {actionError && <p className="form-error" role="alert">{actionError}</p>}
+                </div>
+              </div>
+
+              <section className="reviews-section">
+                <h2>Margin notes</h2>
+                <form onSubmit={handleSubmitReview} className="review-form card card-pad">
+                  <label htmlFor="review-text" className="visually-hidden">Write a review</label>
+                  <textarea
+                    id="review-text"
+                    placeholder="Share your thoughts on this one…"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    maxLength={5000}
+                  />
+                  <button type="submit" disabled={savingReview || !reviewText.trim()}>
+                    {savingReview ? 'Posting…' : 'Post review'}
+                  </button>
+                </form>
+
+                {reviews.length > 0 ? (
+                  <div className="review-list">
+                    {reviews.map((review) => (
+                      <article key={review.id} className="review-card">
+                        <p className="review-content">{review.content}</p>
+                        <p className="review-author hand">— {review.displayName}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="subtle">No notes in the margins yet. Be the first to share your thoughts.</p>
+                )}
+              </section>
+            </>
+          );
+        }}
       </AsyncSection>
     </div>
   );

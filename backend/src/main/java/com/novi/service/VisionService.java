@@ -22,7 +22,7 @@ import java.util.Optional;
 @Slf4j
 public class VisionService {
 
-    private final AnthropicClient anthropicClient;
+    private final LlmClient llmClient;
     private final ObjectMapper objectMapper;
 
     private static final int MAX_SHELF_BOOKS = 60;
@@ -32,7 +32,7 @@ public class VisionService {
     }
 
     public boolean isAvailable() {
-        return anthropicClient.isAvailable();
+        return llmClient.isAvailable();
     }
 
     private static final String SINGLE_SYSTEM_PROMPT = """
@@ -56,7 +56,7 @@ public class VisionService {
 
     /** Detect the single book in a photo. Empty if vision is off or nothing was read. */
     public Optional<DetectedBook> detectSingleBook(String base64Image, String mediaType) {
-        return anthropicClient
+        return llmClient
                 .completeWithImage(SINGLE_SYSTEM_PROMPT,
                         "Identify this book. Return only the JSON object.",
                         base64Image, mediaType, 300)
@@ -65,7 +65,7 @@ public class VisionService {
 
     /** Detect every readable book on a shelf. Empty list if vision is off or nothing was read. */
     public List<DetectedBook> detectShelfBooks(String base64Image, String mediaType) {
-        return anthropicClient
+        return llmClient
                 .completeWithImage(SHELF_SYSTEM_PROMPT,
                         "List every book you can read on this shelf. Return only the JSON object.",
                         base64Image, mediaType, 2000)
@@ -75,7 +75,7 @@ public class VisionService {
 
     private Optional<DetectedBook> parseSingle(String raw) {
         try {
-            JsonNode node = objectMapper.readTree(AnthropicClient.stripJsonFences(raw));
+            JsonNode node = objectMapper.readTree(LlmClient.stripJsonFences(raw));
             return toDetected(node);
         } catch (Exception e) {
             log.warn("Failed to parse single-book vision response: {}", e.getMessage());
@@ -85,7 +85,7 @@ public class VisionService {
 
     private List<DetectedBook> parseShelf(String raw) {
         try {
-            JsonNode root = objectMapper.readTree(AnthropicClient.stripJsonFences(raw));
+            JsonNode root = objectMapper.readTree(LlmClient.stripJsonFences(raw));
             JsonNode books = root.path("books");
             if (!books.isArray()) {
                 return List.of();

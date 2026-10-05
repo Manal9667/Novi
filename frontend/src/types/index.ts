@@ -154,3 +154,50 @@ export interface ConfirmScanResponse {
   alreadyInLibraryCount: number;
   added: UserBook[];
 }
+
+// Novi Wrapped: a Spotify-Wrapped-style reading summary. Optional fields are
+// null/empty when the backend has no reliable data for that section.
+
+export interface WrappedYearInBooks {
+  booksRead: number;
+  booksReadThisYear: number | null;
+  genresExplored: number;
+  authorsRead: number;
+  averageRating: number | null;
+  ratingsCount: number | null;
+  reviewsCount: number | null;
+}
+
+export interface WrappedNamedCount {
+  name: string;
+  count: number;
+}
+
+export interface WrappedPersonality {
+  title: string;
+  summary: string;
+}
+
+export interface WrappedMemorableBook {
+  book: BookSummary;
+  rating: number | null;
+  note: string;
+}
+
+export interface WrappedAchievement {
+  title: string;
+  description: string;
+}
+
+export interface WrappedResponse {
+  year: number;
+  yearInBooks: WrappedYearInBooks;
+  topGenres: WrappedNamedCount[];
+  topAuthors: WrappedNamedCount[];
+  topThemes: string[];
+  personality: WrappedPersonality;
+  mostMemorable: WrappedMemorableBook | null;
+  achievements: WrappedAchievement[];
+  narrative: string;
+  nextChapter: RecommendationResponse[];
+}
