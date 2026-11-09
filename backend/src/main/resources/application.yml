@@ -15,12 +15,6 @@ spring:
       hibernate:
         format_sql: true
 
-  servlet:
-    multipart:
-      # Phase 3 book-scanner photo uploads. Bookshelf photos can be large.
-      max-file-size: ${MAX_UPLOAD_SIZE:15MB}
-      max-request-size: ${MAX_UPLOAD_SIZE:15MB}
-
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -56,34 +50,30 @@ novi:
         trust-forwarded-for: ${AUTH_RATE_LIMIT_TRUST_XFF:false}
 
   ai:
-    # Embeddings: Voyage AI. Get a key at https://dashboard.voyageai.com/.
-    # Optional and independent of Gemini below - recommendations degrade
-    # gracefully (falling back to genre/author overlap) if this is left blank.
-    voyage:
-      api-key: ${VOYAGE_API_KEY:}
-      model: ${VOYAGE_MODEL:voyage-3.5}
-      base-url: ${VOYAGE_BASE_URL:https://api.voyageai.com/v1}
-
-    # Reranking, explanations, natural-language query interpretation, theme
-    # tagging, the reading-personality summary, and the book-scanner vision all
-    # go through Google Gemini via its OpenAI-compatible endpoint
-    # (.../v1beta/openai). Get a key at https://aistudio.google.com/apikey. The
-    # default model is cheap and vision-capable; override GEMINI_MODEL with any
-    # model from https://ai.google.dev/gemini-api/docs/models. Without a key,
-    # Novi falls back to a deterministic, non-AI ranking (see
-    # RecommendationRerankingService) so the rest of the app keeps working
-    # end-to-end (the scanner, which needs vision, returns a clear 503).
+    # Google Gemini powers both reasoning (query understanding, grounded
+    # explanations) and embeddings, via its OpenAI-compatible endpoint
+    # (.../v1beta/openai). Get a key at https://aistudio.google.com/apikey.
+    # Without a key, Novi degrades gracefully: retrieval falls back to lexical
+    # search and explanations fall back to a deterministic sentence, so the app
+    # still works end-to-end.
     gemini:
       api-key: ${GEMINI_API_KEY:}
-      model: ${GEMINI_MODEL:gemini-3.5-flash-lite}
+      model: ${GEMINI_MODEL:gemini-flash-lite-latest}
       base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/openai}
 
-    candidate-pool-size: ${NOVI_CANDIDATE_POOL_SIZE:100}
-    recommendation-count: ${NOVI_RECOMMENDATION_COUNT:10}
-    # Upper bound on books loaded and scored per recommendation request, so a
-    # large catalog can't be pulled into memory wholesale. A vector index is the
-    # proper fix for very large catalogs (see README).
-    max-scan-books: ${NOVI_MAX_SCAN_BOOKS:5000}
+    # Embedding model + output dimensionality. Must match the pgvector column
+    # size in the V2 migration (vector(768)).
+    embedding:
+      model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+      dimensions: ${NOVI_EMBEDDING_DIMENSIONS:768}
+
+    # Outbound HTTP timeouts for Gemini calls.
+    timeout:
+      connect-ms: ${GEMINI_CONNECT_TIMEOUT_MS:5000}
+      read-ms: ${GEMINI_READ_TIMEOUT_MS:30000}
+
+    candidate-pool-size: ${NOVI_CANDIDATE_POOL_SIZE:60}
+    recommendation-count: ${NOVI_RECOMMENDATION_COUNT:8}
 
 logging:
   level:

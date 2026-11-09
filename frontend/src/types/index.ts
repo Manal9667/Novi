@@ -1,6 +1,6 @@
-export type ReadingStatus = 'WANT_TO_READ' | 'CURRENTLY_READING' | 'READ' | 'DNF';
+export type ReadingStatus = 'SAVED' | 'WANT_TO_READ' | 'CURRENTLY_READING' | 'READ' | 'DNF';
 
-/** Pagination envelope returned by every collection endpoint (see backend PageResponse). */
+/** Pagination envelope returned by collection endpoints (see backend PageResponse). */
 export interface Page<T> {
   content: T[];
   page: number;
@@ -17,13 +17,6 @@ export interface AuthResponse {
   displayName: string;
 }
 
-export interface BookSummary {
-  id: number;
-  title: string;
-  coverImageUrl: string | null;
-  authorNames: string[];
-}
-
 export interface Author {
   id: number;
   name: string;
@@ -34,6 +27,15 @@ export interface Genre {
   name: string;
 }
 
+/** Compact book shape used in the saved-books list. */
+export interface BookSummary {
+  id: number;
+  title: string;
+  coverImageUrl: string | null;
+  authorNames: string[];
+}
+
+/** Full catalog detail from GET /api/books/{id}. */
 export interface BookDetail {
   id: number;
   title: string;
@@ -43,10 +45,10 @@ export interface BookDetail {
   publicationDate: string | null;
   authors: Author[];
   genres: Genre[];
-  averageRating: number | null;
-  ratingCount: number;
+  themes: string[];
 }
 
+/** A user's saved book entry. */
 export interface UserBook {
   id: number;
   book: BookSummary;
@@ -56,148 +58,15 @@ export interface UserBook {
   createdAt: string;
 }
 
-export interface Rating {
-  id: number;
+/** A ranked, explained recommendation from POST /api/recommendations/ask. */
+export interface Recommendation {
   bookId: number;
-  stars: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Review {
-  id: number;
-  bookId: number;
-  userId: number;
-  username: string;
-  displayName: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Shelf {
-  id: number;
-  name: string;
-  createdAt: string;
-  books: BookSummary[];
-}
-
-export interface ReadingHistoryEntry {
-  id: number;
-  bookId: number;
-  bookTitle: string;
-  eventType: string;
-  occurredAt: string;
-}
-
-export interface UserProfile {
-  id: number;
-  username: string;
-  displayName: string;
-  bio: string | null;
-  createdAt: string;
-  booksRead: number;
-  currentlyReading: number;
-  wantToRead: number;
-  reviewCount: number;
-}
-
-export interface RecommendationResponse {
-  id: number;
-  book: BookSummary;
-  matchPercent: number;
-  reasons: string[];
-  potentialDownside: string | null;
-  createdAt: string;
-}
-
-export type FeedbackType = 'INTERESTED' | 'NOT_FOR_ME' | 'ADDED_TO_WANT_TO_READ';
-
-export interface AffinityEntry {
-  name: string;
-  score: number;
-}
-
-export interface ReadingPersonalityResponse {
-  genreAffinities: AffinityEntry[];
-  themeAffinities: AffinityEntry[];
-  summary: string;
-}
-
-
-// Phase 3: computer-vision book scanner
-
-export type ScanType = 'SINGLE_BOOK' | 'SHELF';
-export type ScanSessionStatus = 'AWAITING_CONFIRMATION' | 'COMPLETED';
-export type ScanCandidateStatus = 'PENDING' | 'CONFIRMED' | 'SKIPPED';
-
-export interface ScanCandidate {
-  id: number;
-  detectedTitle: string;
-  detectedAuthor: string | null;
-  confidence: number;
-  matchedBook: BookSummary | null;
-  status: ScanCandidateStatus;
-}
-
-export interface ScanResult {
-  sessionId: number;
-  type: ScanType;
-  detectedCount: number;
-  status: ScanSessionStatus;
-  candidates: ScanCandidate[];
-}
-
-export interface ConfirmScanResponse {
-  addedCount: number;
-  skippedCount: number;
-  alreadyInLibraryCount: number;
-  added: UserBook[];
-}
-
-// Novi Wrapped: a Spotify-Wrapped-style reading summary. Optional fields are
-// null/empty when the backend has no reliable data for that section.
-
-export interface WrappedYearInBooks {
-  booksRead: number;
-  booksReadThisYear: number | null;
-  genresExplored: number;
-  authorsRead: number;
-  averageRating: number | null;
-  ratingsCount: number | null;
-  reviewsCount: number | null;
-}
-
-export interface WrappedNamedCount {
-  name: string;
-  count: number;
-}
-
-export interface WrappedPersonality {
   title: string;
-  summary: string;
-}
-
-export interface WrappedMemorableBook {
-  book: BookSummary;
-  rating: number | null;
-  note: string;
-}
-
-export interface WrappedAchievement {
-  title: string;
-  description: string;
-}
-
-export interface WrappedResponse {
-  year: number;
-  yearInBooks: WrappedYearInBooks;
-  topGenres: WrappedNamedCount[];
-  topAuthors: WrappedNamedCount[];
-  topThemes: string[];
-  personality: WrappedPersonality;
-  mostMemorable: WrappedMemorableBook | null;
-  achievements: WrappedAchievement[];
-  narrative: string;
-  nextChapter: RecommendationResponse[];
+  authors: string[];
+  coverImageUrl: string | null;
+  description: string | null;
+  genres: string[];
+  themes: string[];
+  relevanceScore: number;
+  explanation: string;
 }

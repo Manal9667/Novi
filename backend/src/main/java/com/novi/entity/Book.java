@@ -40,14 +40,6 @@ public class Book {
     @Column(name = "publication_date")
     private LocalDate publicationDate;
 
-    /** id of the record in the external metadata provider (e.g. Open Library work key) */
-    @Column(name = "external_metadata_id", length = 100)
-    private String externalMetadataId;
-
-    /** which provider externalMetadataId came from, so providers can be swapped later */
-    @Column(name = "external_metadata_source", length = 50)
-    private String externalMetadataSource;
-
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "book_authors",
@@ -82,10 +74,11 @@ public class Book {
     private Set<Theme> themes = new HashSet<>();
 
     /**
-     * Semantic embedding of this book (title + description + genres/authors),
-     * stored as a JSON float array rather than a native pgvector column - see
-     * V2__ai_recommendations.sql for why. Null until {@code BookEmbeddingService}
-     * has processed the book.
+     * Semantic embedding of this book (title + authors + genres + themes +
+     * description), stored as a JSON float array. It is mirrored into the native
+     * pgvector column {@code embedding_vec} for index-backed retrieval (see the
+     * pgvector migration). Null until {@code BookEmbeddingService} has processed
+     * the book.
      */
     @Column(name = "embedding", columnDefinition = "text")
     private String embedding;

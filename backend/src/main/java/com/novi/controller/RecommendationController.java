@@ -1,14 +1,10 @@
 package com.novi.controller;
 
-import com.novi.dto.recommendation.FeedbackRequest;
 import com.novi.dto.recommendation.NaturalLanguageRequest;
-import com.novi.dto.recommendation.ReadingPersonalityResponse;
 import com.novi.dto.recommendation.RecommendationResponse;
-import com.novi.dto.wrapped.WrappedResponse;
+import com.novi.entity.User;
 import com.novi.security.CurrentUserProvider;
-import com.novi.service.ReadingPersonalityService;
 import com.novi.service.RecommendationService;
-import com.novi.service.WrappedService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -21,36 +17,17 @@ import java.util.List;
 public class RecommendationController {
 
     private final RecommendationService recommendationService;
-    private final ReadingPersonalityService readingPersonalityService;
-    private final WrappedService wrappedService;
     private final CurrentUserProvider currentUserProvider;
 
-    /** Personalized recommendations generated from the user's full reading profile. */
-    @GetMapping
-    public List<RecommendationResponse> getRecommendations() {
-        return recommendationService.getPersonalizedRecommendations(currentUserProvider.getCurrentUser());
-    }
-
-    /** Natural-language recommendation requests, e.g. "something like Dune but shorter". */
+    /**
+     * Natural-language recommendation request, e.g.
+     * "a psychological thriller with an unreliable narrator, like The Silent Patient".
+     * Public: works signed-out. When a user is signed in, books already in their
+     * library are excluded.
+     */
     @PostMapping("/ask")
     public List<RecommendationResponse> ask(@Valid @RequestBody NaturalLanguageRequest request) {
-        return recommendationService.getRecommendationsForQuery(currentUserProvider.getCurrentUser(), request.query());
-    }
-
-    @PostMapping("/{id}/feedback")
-    public void giveFeedback(@PathVariable Long id, @Valid @RequestBody FeedbackRequest request) {
-        recommendationService.recordFeedback(currentUserProvider.getCurrentUser(), id, request);
-    }
-
-    /** "My Reading Personality": interpretable genre/theme affinities plus an AI-written summary. */
-    @GetMapping("/reading-personality")
-    public ReadingPersonalityResponse getReadingPersonality() {
-        return readingPersonalityService.getReadingPersonality(currentUserProvider.getCurrentUser());
-    }
-
-    /** "Novi Wrapped": a Spotify-Wrapped-style summary of the reader's real activity. */
-    @GetMapping("/wrapped")
-    public WrappedResponse getWrapped() {
-        return wrappedService.getWrapped(currentUserProvider.getCurrentUser());
+        User user = currentUserProvider.getCurrentUserOrNull();
+        return recommendationService.recommend(user, request.query());
     }
 }

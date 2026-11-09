@@ -1,201 +1,218 @@
-# Novi — AI-Powered Social Reading Platform
+# Novi — AI-Powered Book Recommendation Engine
 
-Novi is a full-stack reading platform that goes beyond simple book tracking: it learns each user's individual reading taste from their ratings, reviews, and reading history, and uses that profile to generate personalized, explainable book recommendations — rather than just recommending books similar to whatever the user is currently viewing.
+Novi helps you find your next read by describing it in plain language. Instead of
+genre menus and keyword filters, you tell Novi what you're in the mood for —
 
-Users can also build their library the easy way: by taking a photo of a bookshelf and letting Novi's computer-vision pipeline identify and import the books automatically.
+> "A psychological thriller with an unreliable narrator, dark atmosphere, and an
+> unexpected ending. Something like *The Silent Patient*."
 
----
+— and Novi interprets the request, retrieves semantically similar books from a
+curated catalog, ranks them with a transparent scoring model, and explains, for
+each pick, *why* it fits. Sign in to save the ones you like.
 
-## Why Novi
-
-Most recommendation features on reading platforms are shallow — "you looked at Dune, here's more sci-fi." Novi is built around a different idea:
-
-> Recommendations should come from a **taste profile** built out of what a user has actually rated, reviewed, finished, and abandoned — not just the book on screen.
-
-A Novi recommendation looks like this:
-
-```
-The Secret History — 94% Match
-
-Why:
-• You rated If We Were Villains 5★
-• You frequently enjoy dark academic settings
-• You tend to rate psychological fiction highly
-• You prefer complex character relationships
-
-Potential downside:
-The pacing is slower than most books you rate highly.
-```
+It's a deliberately small product built to do one thing well, and to show a
+complete, production-shaped **Retrieval-Augmented Generation (RAG)** pipeline on
+a real stack.
 
 ---
 
-## Features
-
-### Core Platform
-- Secure registration and login (no email required — username + password only)
-- Book search backed by a real external metadata source
-- Personal library with reading statuses: `WANT_TO_READ`, `CURRENTLY_READING`, `READ`, `DNF`
-- Ratings (1–5 stars) and written reviews
-- Custom shelves (e.g. "Favorites," "2026 Reads," "Sci-Fi")
-- Reading history tracking (added, started, finished, status changes)
-- User profiles
-
-### AI Recommendation Engine
-- Per-user taste profiles built from ratings, reviews, genres, authors, and reading history, with signal strength weighted by rating (5★ = strong positive, DNF = negative, etc.)
-- Book semantic embeddings stored in a native **`pgvector`** column with an **HNSW** index; candidate retrieval is an index-backed approximate-nearest-neighbour search (cosine distance) rather than a full-catalog scan
-- Candidate set narrowed from the full catalog down to ~100 books before ranking
-- LLM-based reranking of candidates against the user's taste profile
-- Retrieval quality is measured with an offline **evaluation harness** (Precision@K, Recall@K, MRR, nDCG@K) — see [Evaluation](#evaluation)
-- Explainable recommendations — every suggestion states *why*, grounded in the user's actual data
-- Natural-language recommendation requests (e.g. "something like Harry Potter but darker")
-- Recommendation feedback (👍 / 👎 / add to Want to Read) that feeds back into future recommendations
-- "Your Reading Personality" — a visual + natural-language summary of what Novi has learned about the user
-
-### Computer Vision Book Scanner
-- Single-book scanning: photograph a book, extract title/author via OCR/vision, confirm and add
-- Bookshelf scanning: photograph a shelf, detect individual spines, extract text, match against book metadata, and bulk-import with confidence scoring
-- Low-confidence matches are never silently added — the user always confirms, corrects, or skips
-
----
-
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React, TypeScript |
-| Backend | Java 21+, Spring Boot, Spring Security, Spring Data JPA, Hibernate |
-| Database | PostgreSQL + `pgvector` (HNSW-indexed vector similarity search) |
-| AI / Recommendations | Vector embeddings, pgvector ANN retrieval, LLM-based reranking, offline evaluation harness |
-| Computer Vision | OCR / vision-language model for spine detection and text extraction |
-| Testing | JUnit, Mockito, Spring Boot Test, Testcontainers |
-| Infrastructure | Docker, Docker Compose |
+| Frontend | React 18, TypeScript, Vite, React Router |
+| Backend | Java 21, Spring Boot 3.3, Spring Security (JWT), Spring Data JPA |
+| Database | PostgreSQL + `pgvector` (HNSW index, cosine distance) |
+| AI | Google Gemini — `gemini-embedding-001` (embeddings) + a Gemini chat model (query understanding & explanations), via Gemini's OpenAI-compatible API |
+| Migrations | Flyway |
+| Testing | JUnit 5, Mockito, Testcontainers (backend); Vitest + Testing Library (frontend) |
+| Infra | Docker, Docker Compose |
 
 ---
 
 ## Architecture
 
 ```
-                         ┌───────────────┐
-                         │    React      │
-                         │   Frontend    │
-                         └───────┬───────┘
-                                 │
-                                 ↓
-                    ┌──────────────────────┐
-                    │   Spring Boot / Java │
-                    │      Backend         │
-                    └──────────┬───────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              ↓                ↓                ↓
-        PostgreSQL        AI Services       CV Services
-                           │                     │
-                     Embeddings              OCR/Vision
-                     Taste Profile
-                     Retrieval + LLM Ranking
+          React (Vite)                     Spring Boot
+   ┌───────────────────────┐        ┌──────────────────────────┐
+   │ Discovery page         │  HTTP  │ RecommendationController  │
+   │  (natural-language box)│──────▶ │   └ RecommendationService │  ← orchestrates the pipeline
+   │ Recommendation cards   │        │       ├ QueryIntentService │  (1) understand
+   │ Book detail            │        │       ├ EmbeddingService   │  (2) embed
+   │ Saved books (auth)     │        │       ├ CandidateRetrieval │  (2) retrieve (pgvector + lexical)
+   └───────────────────────┘        │       ├ RankingService     │  (3) rank (transparent, weighted)
+                                     │       └ ExplanationService │  (4) explain (grounded)
+                                     ├──────────────────────────┤
+                                     │ LibraryController (saved) │
+                                     │ AuthController (JWT)       │
+                                     └───────────┬──────────────┘
+                                                 │ JPA / native pgvector
+                                          ┌──────▼───────┐        ┌──────────────┐
+                                          │ PostgreSQL   │◀──────▶│ Google Gemini │
+                                          │ + pgvector   │        └──────────────┘
+                                          └──────────────┘
 ```
 
-- Controllers stay thin — business logic lives in the service layer, persistence in the repository layer, and API contracts are defined through DTOs (JPA entities are never exposed directly).
-- The recommendation pipeline is retrieval-first: the full catalog is never sent to the LLM. A vector-similarity retrieval step narrows the field before any AI ranking happens.
-- Uncertain computer-vision matches are surfaced with a confidence score and require explicit user confirmation before anything is added to a library.
+Controllers stay thin; business logic lives in services; persistence in
+repositories; API contracts are DTOs (JPA entities are never exposed). Every AI
+call has a deterministic fallback, so the app works end-to-end even with no API
+key configured.
 
 ---
 
-## Getting Started
+## The recommendation pipeline (RAG)
 
-### Prerequisites
-- Java 21+
-- Node.js
-- Docker & Docker Compose
-- PostgreSQL (or run via Docker Compose)
+A single natural-language request flows through five modular steps in
+`RecommendationService.recommend(user, query)`:
 
+1. **Query understanding** — `QueryIntentService` asks Gemini to turn the free
+   text into a structured intent (genres, themes, cultural context, authors,
+   "similar to", moods, keywords). Malformed or missing LLM output falls back to
+   deterministic keyword extraction.
+2. **Semantic retrieval** — the request is embedded once with
+   `gemini-embedding-001` (768-dim) and used for an index-backed
+   nearest-neighbour search over `pgvector` (cosine distance), blended with a
+   lexical keyword search. More candidates are retrieved than are shown.
+3. **Hybrid ranking** — `RankingService` scores each candidate with a
+   transparent, configurable weighted formula (no black-box model):
 
-## API Overview
+   ```
+   relevance = (wSemantic · cosineSimilarity + wMetadata · metadataMatch) / (wSemantic + wMetadata)
+   final     = (1 − wPreference) · relevance + wPreference · savedBookAffinity   // preference only when signed in
+   ```
 
-```
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
+   Weights live under `novi.ai.ranking` (defaults 0.6 / 0.25 / 0.15). Duplicate
+   books are removed and the list is trimmed to the final count.
+4. **Grounded explanation** — `ExplanationService` passes only the top books'
+   real metadata to Gemini and asks for a 1–2 sentence reason per book,
+   explicitly forbidding invented facts. Any book the model skips gets a
+   deterministic, metadata-grounded fallback sentence.
+5. **Response** — each recommendation is returned with book id, title, authors,
+   cover, description, genres, themes, an interpretable `relevanceScore`
+   (0–100), and the explanation.
 
-GET    /api/books
-GET    /api/books/{id}
+**Graceful degradation:** with no `GEMINI_API_KEY`, step 1 uses keyword intent,
+step 2 uses lexical retrieval only, and step 4 uses the deterministic fallback —
+the endpoint still returns sensible, ranked, explained results.
 
-GET    /api/library
-POST   /api/library/books
-DELETE /api/library/books/{bookId}
-PATCH  /api/library/books/{bookId}/status
-
-POST   /api/books/{bookId}/ratings
-POST   /api/books/{bookId}/reviews
-
-GET    /api/reading-history
-
-GET    /api/shelves
-POST   /api/shelves
-
-GET    /api/recommendations
-POST   /api/recommendations/ask
-POST   /api/recommendations/{id}/feedback
-GET    /api/recommendations/reading-personality
-
-POST   /api/scan/book              # scan a single physical book (multipart image)
-POST   /api/scan/shelf             # scan a whole bookshelf (multipart image)
-GET    /api/scan/sessions/{id}     # retrieve a previous scan
-POST   /api/scan/sessions/{id}/confirm   # add the confirmed books to the library
-```
-
-All endpoints follow REST conventions with proper status codes, request validation, and centralized error handling.
+The catalog is **seeded and embedded once**, not fetched from an external API
+per request, so recommendations are fast and self-contained.
 
 ---
 
-## Project Structure
+## Database
 
+- **Schema** (Flyway, `backend/src/main/resources/db/migration`):
+  - `V1__init_schema.sql` — `users`, `authors`, `genres`, `themes`, `books`
+    (+ `book_authors` / `book_genres` / `book_themes` join tables), `user_books`
+    (saved books). Primary/foreign keys, unique constraints, indexes.
+  - `V2__pgvector_embeddings.sql` — enables `pgvector` (gracefully skipped if
+    unavailable), adds `books.embedding_vec vector(768)`, and an **HNSW** index
+    over cosine distance.
+- **Seeding** — `CatalogSeeder` loads a curated set of ~64 real books from
+  `backend/src/main/resources/data/books.json` on startup. It is idempotent
+  (dedupes by ISBN / title), so restarts never duplicate rows.
+- **Embeddings** — after seeding, any book missing an embedding is embedded once
+  via Gemini and mirrored into the `pgvector` column. Existing embeddings are
+  never regenerated.
+
+> The embedding dimension (`768`) must match the `vector(768)` column. If you
+> change `NOVI_EMBEDDING_DIMENSIONS`, update `V2__pgvector_embeddings.sql` and
+> re-embed.
+
+---
+
+## Environment variables
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `JWT_SECRET` | yes (prod) | dev-only placeholder | HMAC secret for JWTs (≥ 32 bytes) |
+| `GEMINI_API_KEY` | no | — | Enables Gemini query understanding, embeddings, explanations |
+| `GEMINI_MODEL` | no | `gemini-flash-lite-latest` | Chat model for intent + explanations |
+| `GEMINI_EMBEDDING_MODEL` | no | `gemini-embedding-001` | Embedding model |
+| `NOVI_EMBEDDING_DIMENSIONS` | no | `768` | Embedding size (must match the migration) |
+| `CORS_ALLOWED_ORIGINS` | no | `http://localhost:*` | Browser origins allowed to call the API |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | no | localhost / 5432 / novi | Database connection |
+
+Secrets are read from the environment only — never hard-coded or committed.
+`.env` is git-ignored. A TLS-intercepting network (corporate proxy / antivirus)
+can break outbound HTTPS to Gemini; drop the intercepting root CA into
+`backend/certs/*.cer` and the Docker build trusts it automatically.
+
+---
+
+## Running locally
+
+### With Docker Compose (recommended)
+
+```bash
+# A strong secret is required; a Gemini key is optional but enables the AI path.
+export JWT_SECRET="$(openssl rand -base64 48)"
+export GEMINI_API_KEY="your-key"   # optional
+
+docker compose up --build
 ```
-novi/
-├── backend/          # Spring Boot API
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── entity/
-│   ├── dto/
-│   ├── mapper/
-│   ├── security/
-│   └── config/
-├── frontend/          # React + TypeScript client
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── hooks/
-│       ├── api/
-│       └── types/
-├── docker-compose.yml
-└── README.md
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080
+- Database: `pgvector/pgvector:pg16` on 5432
+
+> If you changed migrations against an existing volume, reset it first:
+> `docker compose down -v`.
+
+### Manually
+
+**Database**
+```bash
+docker compose up -d db
+```
+
+**Backend** (Java 21, Maven)
+```bash
+cd backend
+SPRING_PROFILES_ACTIVE=dev GEMINI_API_KEY=your-key mvn spring-boot:run
+```
+The `dev` profile permits the committed placeholder `JWT_SECRET` for local use.
+
+**Frontend** (Node 18+)
+```bash
+cd frontend
+npm install
+npm run dev   # proxies /api -> http://localhost:8080
 ```
 
 ---
 
-## Design Decisions Worth Noting
+## Testing
 
-- **No email requirement.** Reading history can be personal, so onboarding only requires a username and password, minimizing unnecessary data collection.
-- **Retrieval before ranking.** Recommendations use embeddings + metadata to shrink the candidate pool before any LLM involvement, keeping the AI layer fast and cheap rather than brute-forcing similarity over the whole catalog.
-- **Explainability is mandatory.** Every recommendation ships with a reason tied to real user data — no generic "you might also like" text.
-- **Confidence over automation.** The book scanner never silently populates a library; low-confidence matches always require user confirmation. A scan is persisted as a session plus one candidate row per detected book, and a combined score (vision confidence × metadata-match confidence) is surfaced so uncertain reads are flagged rather than guessed.
-- **Graceful AI degradation.** The Voyage (embeddings) and Google Gemini (reranking, explanations, natural-language queries, theme tagging, reading-personality, and the scanner's vision) integrations are all optional. Any Gemini model can be selected via `GEMINI_MODEL`. Without keys, recommendations fall back to deterministic genre/author-overlap ranking so Phases 1–2 work end-to-end; the Phase 3 scanner, which genuinely needs a vision model, returns a clear `503` explaining it must be enabled.
-- **pgvector-backed retrieval.** Book embeddings live in a native `pgvector` column (`books.embedding_vec`, `vector(1024)`) with an HNSW index over cosine distance, so candidate retrieval is an index-backed nearest-neighbour query (`embedding_vec <=> :taste`) instead of scanning the whole catalog. The JSON float-array column remains the app-facing source of truth and is mirrored into the vector column on write (the JSON array text is already valid `pgvector` input); if a database has no vector extension or a candidate lacks an embedding, retrieval degrades gracefully to a bounded genre-affinity scan with app-layer cosine, so recommendations still work. Requires a `pgvector`-enabled Postgres (the bundled `docker-compose.yml` and the Testcontainers integration tests both use `pgvector/pgvector:pg16`).
+**Backend** (`cd backend`)
+```bash
+mvn test      # unit tests (Gemini mocked): query parsing, ranking, explanations,
+              # duplicate prevention, saved-book ops, orchestration
+mvn verify    # + Testcontainers integration tests (auth, recommendation API)
+```
+Integration tests spin up a disposable `pgvector` Postgres via Testcontainers.
+If your environment can't drive Testcontainers (e.g. Docker Desktop discovery
+issues on Windows), point them at a running database instead:
+```bash
+IT_DB_URL=jdbc:postgresql://localhost:5432/novi IT_DB_USERNAME=novi IT_DB_PASSWORD=novi mvn verify
+```
+No test makes a live Gemini call — the AI client is mocked (unit) or absent
+(integration), so the deterministic fallbacks are exercised.
+
+**Frontend** (`cd frontend`)
+```bash
+npm run test:run   # Vitest + Testing Library: recommendation form, result
+                   # rendering, save/unsave, loading / empty / error states
+```
 
 ---
 
 ## Evaluation
 
-Retrieval quality is measured, not assumed. The `com.novi.eval` package provides a small, dependency-free evaluation toolkit:
-
-- **`RetrievalMetrics`** — Precision@K, Recall@K, Reciprocal Rank (→ MRR), and nDCG@K over ranked results against a labeled relevant set (binary relevance).
-- **`RetrievalEvaluationHarness`** — runs any `Retriever` over a set of labeled queries and aggregates the metrics at a cutoff `k`.
-- **`VectorRetriever`** — an in-memory retriever with pluggable scoring strategies (`DOT_PRODUCT`, `COSINE`, `CENTERED_COSINE`) used to compare embedding-representation choices.
-- **`SyntheticEvaluationData`** — deterministically generates a labeled, clustered dataset from a fixed seed, so experiments are fully reproducible with no API key or database.
-- **`EmbeddingRepresentationExperiment`** — runs every strategy through the harness and selects the best by nDCG@K.
-
-### Reproducible experiment
+Retrieval quality is measured, not assumed. The dependency-free `com.novi.eval`
+toolkit computes Precision@K, Recall@K, MRR, and nDCG@K and compares embedding
+representation strategies on a reproducible synthetic dataset:
 
 ```bash
 cd backend
@@ -203,25 +220,38 @@ mvn -q compile
 java -cp target/classes com.novi.eval.RetrievalEvaluationRunner
 ```
 
-Example output (deterministic for the fixed seed):
-
-```
-Novi retrieval-quality evaluation (seed=42, dim=64, topics=8, k=10)
--------------------------------------------------------------
-DOT_PRODUCT         P@10=0.619  R@10=0.773  MRR=0.984  nDCG@10=0.815
-COSINE              P@10=0.772  R@10=0.965  MRR=0.984  nDCG@10=0.965
-CENTERED_COSINE     P@10=0.741  R@10=0.926  MRR=0.964  nDCG@10=0.931
--------------------------------------------------------------
-Best strategy by nDCG@10: COSINE (nDCG=0.965)
-```
-
-The experiment quantifies a real design choice: raw dot-product retrieval scores markedly worse (nDCG 0.815) than L2-normalized cosine (0.965) on this embedding space, because vector magnitude carries no topic signal — which is exactly why retrieval uses cosine distance. The metrics and the experiment are covered by unit tests (`RetrievalMetricsTest`, `RetrievalEvaluationHarnessTest`), so the workflow runs in CI.
+It quantifies a real design choice — L2-normalized **cosine** clearly beats raw
+dot-product on this embedding space — which is why retrieval uses cosine
+distance. The metrics and harness are covered by unit tests.
 
 ---
 
-## Future Improvements
+## Project structure
 
-- Optional email-based account recovery
-- Import support for external reading-data exports (e.g. Goodreads)
-- Expanded natural-language recommendation interface
-- Public profiles / social following
+```
+novi/
+├── backend/                  # Spring Boot API
+│   └── src/main/java/com/novi/
+│       ├── controller/       # Auth, Book, Library, Recommendation
+│       ├── service/          # RAG pipeline: QueryIntent, CandidateRetrieval,
+│       │                     #   Ranking, Explanation, GeminiEmbedding, LlmClient,
+│       │                     #   RecommendationService, LibraryService, CatalogSeeder
+│       ├── repository/ entity/ dto/ security/ config/ exception/
+│       └── eval/             # offline retrieval-quality harness
+│   └── src/main/resources/
+│       ├── db/migration/     # Flyway V1 (schema) + V2 (pgvector)
+│       └── data/books.json   # curated seed catalog
+├── frontend/                 # React + TypeScript (Vite)
+│   └── src/{pages,components,services,context,styles,types}
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## Scope, by design
+
+Novi intentionally does **not** include social features, reviews/ratings,
+reading-progress tracking, shelves, a photo scanner, or analytics dashboards. It
+does one thing — natural-language book discovery with explainable
+recommendations — and tries to do it well.

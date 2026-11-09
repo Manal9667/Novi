@@ -67,14 +67,11 @@ public class SecurityConfig {
                         // the public GET rule below (it's a POST, so it isn't
                         // matched by that rule, but keep intent explicit).
                         .requestMatchers(HttpMethod.POST, "/api/books/backfill-embeddings").hasRole("ADMIN")
-                        // Live external search imports books (DB writes + outbound
-                        // provider/AI calls), so it must be authenticated. Declared
-                        // before the public GET rule below so it takes precedence.
-                        .requestMatchers(HttpMethod.GET, "/api/books/search").authenticated()
-                        // Public book browsing. This also covers the public
-                        // GET /api/books/{id}/reviews sub-path; a separate
-                        // "/api/books/**/reviews" matcher is invalid because a
-                        // PathPattern cannot contain segments after a "**".
+                        // Natural-language recommendations are public so the
+                        // discovery experience works without an account; saving
+                        // books (/api/library) still requires authentication.
+                        .requestMatchers(HttpMethod.POST, "/api/recommendations/ask").permitAll()
+                        // Public, side-effect-free catalog reads (browse + detail).
                         .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()

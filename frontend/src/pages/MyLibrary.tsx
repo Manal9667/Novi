@@ -1,72 +1,74 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookCard } from '../components/BookCard';
+import { BookCover } from '../components/BookCover';
 import { EmptyState } from '../components/states/EmptyState';
 import { ErrorState } from '../components/states/ErrorState';
 import { BookGridSkeleton } from '../components/states/Skeleton';
 import { EmptyShelfIllustration } from '../components/icons';
 import { useAsync } from '../hooks/useAsync';
-import { libraryService } from '../services';
-import type { ReadingStatus, UserBook } from '../types';
-
-type Filter = ReadingStatus | 'ALL';
-
-const FILTERS: { label: string; value: Filter }[] = [
-  { label: 'All', value: 'ALL' },
-  { label: 'Want to Read', value: 'WANT_TO_READ' },
-  { label: 'Currently Reading', value: 'CURRENTLY_READING' },
-  { label: 'Read', value: 'READ' },
-  { label: 'DNF', value: 'DNF' }
-];
+import { getApiErrorMessage, libraryService } from '../services';
+import type { UserBook } from '../types';
 
 export default function MyLibrary() {
-  const [filter, setFilter] = useState<Filter>('ALL');
-
-  const library = useAsync<UserBook[]>(async () => {
-    const page = await libraryService.getLibrary(
-      filter === 'ALL' ? { size: 200 } : { status: filter, size: 200 }
-    );
+  const saved = useAsync<UserBook[]>(async () => {
+    const page = await libraryService.getSaved({ size: 200 });
     return page.content;
-  }, [filter]);
+  }, []);
+
+  const [removing, setRemoving] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function handleRemove(bookId: number) {
+    setRemoving(bookId);
+    setActionError(null);
+    try {
+      await libraryService.remove(bookId);
+      saved.reload();
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, 'Could not remove this book.'));
+    } finally {
+      setRemoving(null);
+    }
+  }
 
   return (
     <div className="page">
-      <h1>My library</h1>
-      <p className="subtle">Every book you've shelved, in one place.</p>
+      <h1>Saved books</h1>
+      <p className="subtle">Books you’ve saved from your recommendations.</p>
 
-      <div className="tabs" role="tablist" aria-label="Filter library by reading status">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            role="tab"
-            aria-selected={filter === f.value}
-            className={filter === f.value ? 'tab active' : 'tab'}
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {actionError && <p className="form-error" role="alert">{actionError}</p>}
 
-      {library.status === 'loading' && <BookGridSkeleton count={10} />}
-      {library.status === 'error' && <ErrorState message={library.error ?? 'Could not load your library.'} onRetry={library.reload} />}
-      {library.status === 'success' && library.data && (
-        library.data.length > 0 ? (
-          <div className="book-grid shelf-grid">
-            {library.data.map((ub) => (
-              <BookCard key={ub.id} book={ub.book} />
+      {saved.status === 'loading' && <BookGridSkeleton count={8} />}
+      {saved.status === 'error' && (
+        <ErrorState message={saved.error ?? 'Could not load your saved books.'} onRetry={saved.reload} />
+      )}
+      {saved.status === 'success' && saved.data && (
+        saved.data.length > 0 ? (
+          <div className="book-grid saved-grid">
+            {saved.data.map((ub) => (
+              <div key={ub.id} className="saved-card">
+                <Link to={`/books/${ub.book.id}`} className="book-card">
+                  <BookCover src={ub.book.coverImageUrl} title={ub.book.title} />
+                  <div className="book-title">{ub.book.title}</div>
+                  <div className="book-authors">{ub.book.authorNames.join(', ')}</div>
+                </Link>
+                <button
+                  type="button"
+                  className="chip chip-sm saved-remove"
+                  onClick={() => handleRemove(ub.book.id)}
+                  disabled={removing === ub.book.id}
+                >
+                  {removing === ub.book.id ? 'Removing…' : 'Remove'}
+                </button>
+              </div>
             ))}
           </div>
         ) : (
           <EmptyState
             illustration={<EmptyShelfIllustration className="illo" />}
-            title={filter === 'ALL' ? 'Your library is empty' : 'Nothing on this shelf yet'}
-            message={
-              filter === 'ALL'
-                ? "Let's find your first book to curl up with."
-                : 'No books in this view yet. Try another shelf or add something new.'
-            }
-            action={<Link to="/find" className="button-link">Find a book</Link>}
+            title="No saved books yet"
+            message="Describe what you're in the mood for and save the recommendations you like."
+            action={<Link to="/" className="button-link">Find a book</Link>}
           />
         )
       )}

@@ -22,8 +22,8 @@ RUN mvn -B clean package -Dmaven.test.skip=true
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Same extra-CA trust at runtime, so outbound HTTPS (Gemini, Open Library) works
-# on a TLS-intercepting network. No-op when certs/ has no .cer files.
+# Same extra-CA trust at runtime, so outbound HTTPS to Gemini works on a
+# TLS-intercepting network. No-op when certs/ has no .cer files.
 COPY certs/ /tmp/certs/
 RUN for f in /tmp/certs/*.cer; do [ -e "$f" ] || continue; \
       keytool -importcert -noprompt -trustcacerts -alias "extra-$(basename "$f")" \

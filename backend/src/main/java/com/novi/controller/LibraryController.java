@@ -2,7 +2,6 @@ package com.novi.controller;
 
 import com.novi.dto.common.PageResponse;
 import com.novi.dto.library.AddBookRequest;
-import com.novi.dto.library.UpdateStatusRequest;
 import com.novi.dto.library.UserBookResponse;
 import com.novi.entity.enums.ReadingStatus;
 import com.novi.security.CurrentUserProvider;
@@ -47,10 +46,5 @@ public class LibraryController {
     public ResponseEntity<Void> removeBook(@PathVariable Long bookId) {
         libraryService.removeBook(currentUserProvider.getCurrentUser(), bookId);
         return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/books/{bookId}/status")
-    public UserBookResponse updateStatus(@PathVariable Long bookId, @Valid @RequestBody UpdateStatusRequest request) {
-        return libraryService.updateStatus(currentUserProvider.getCurrentUser(), bookId, request.status());
     }
 }

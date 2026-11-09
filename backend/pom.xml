@@ -15,7 +15,7 @@
     <artifactId>novi-backend</artifactId>
     <version>0.1.0</version>
     <name>novi-backend</name>
-    <description>Novi - AI-powered social reading platform (Phase 1: core backend)</description>
+    <description>Novi - AI-powered book recommendation engine (RAG with Gemini + pgvector)</description>
 
     <properties>
         <java.version>21</java.version>

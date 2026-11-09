@@ -1,0 +1,578 @@
+[
+  {
+    "title": "The Silent Patient",
+    "authors": ["Alex Michaelides"],
+    "genres": ["Psychological Thriller", "Mystery"],
+    "themes": ["unreliable narrator", "trauma", "obsession", "dark atmosphere", "twist ending"],
+    "publicationYear": 2019,
+    "isbn": "9781250301697",
+    "description": "A renowned painter shoots her husband and then never speaks another word. A criminal psychotherapist becomes fixated on breaking her silence and uncovering the truth, in a tense, twist-driven psychological thriller with an unreliable narrator."
+  },
+  {
+    "title": "Gone Girl",
+    "authors": ["Gillian Flynn"],
+    "genres": ["Psychological Thriller", "Mystery"],
+    "themes": ["unreliable narrator", "toxic marriage", "deception", "dark atmosphere", "twist ending"],
+    "publicationYear": 2012,
+    "isbn": "9780307588364",
+    "description": "When a woman vanishes on her fifth wedding anniversary, suspicion falls on her husband. Told through shifting, unreliable perspectives, it is a sharp, cynical thriller about a marriage built on lies and the stories we tell to survive."
+  },
+  {
+    "title": "Sharp Objects",
+    "authors": ["Gillian Flynn"],
+    "genres": ["Psychological Thriller", "Mystery"],
+    "themes": ["trauma", "family secrets", "self-harm", "dark atmosphere", "small town"],
+    "publicationYear": 2006,
+    "isbn": "9780307341556",
+    "description": "A troubled reporter returns to her stifling hometown to cover the murders of two girls and is forced to confront her own damaged family. A dark, atmospheric thriller about inherited violence and buried trauma."
+  },
+  {
+    "title": "The Woman in the Window",
+    "authors": ["A.J. Finn"],
+    "genres": ["Psychological Thriller", "Mystery"],
+    "themes": ["unreliable narrator", "isolation", "paranoia", "dark atmosphere"],
+    "publicationYear": 2018,
+    "isbn": "9780062678416",
+    "description": "An agoraphobic woman who spends her days watching her neighbors believes she has witnessed a crime, but no one trusts her account. A claustrophobic, Hitchcockian thriller with an unreliable narrator."
+  },
+  {
+    "title": "Before I Go to Sleep",
+    "authors": ["S.J. Watson"],
+    "genres": ["Psychological Thriller", "Mystery"],
+    "themes": ["amnesia", "unreliable narrator", "identity", "paranoia"],
+    "publicationYear": 2011,
+    "isbn": "9780062060556",
+    "description": "A woman wakes each morning with no memory of the past, piecing her life together from a journal she cannot remember writing. A tense thriller about memory, trust, and the fragility of identity."
+  },
+  {
+    "title": "In the Woods",
+    "authors": ["Tana French"],
+    "genres": ["Mystery", "Crime"],
+    "themes": ["memory", "childhood", "dark atmosphere", "psychological depth"],
+    "publicationYear": 2007,
+    "isbn": "9780143113492",
+    "description": "A detective investigates the murder of a child in the same woods where, decades earlier, he survived a disappearance he cannot recall. A literary, atmospheric crime novel about memory and the unknowable past."
+  },
+  {
+    "title": "The Guest List",
+    "authors": ["Lucy Foley"],
+    "genres": ["Mystery", "Thriller"],
+    "themes": ["closed circle", "secrets", "dark atmosphere", "multiple perspectives"],
+    "publicationYear": 2020,
+    "isbn": "9780062868930",
+    "description": "A glamorous wedding on a remote island turns deadly when a guest is found murdered and everyone has something to hide. A twisty, multi-narrator mystery in the classic closed-circle tradition."
+  },
+  {
+    "title": "Big Little Lies",
+    "authors": ["Liane Moriarty"],
+    "genres": ["Mystery", "Domestic Fiction"],
+    "themes": ["secrets", "domestic abuse", "friendship", "small town"],
+    "publicationYear": 2014,
+    "isbn": "9780399167065",
+    "description": "Three mothers in a seaside town are drawn together by their children and pulled apart by secrets, building toward a death at a school fundraiser. A sharp, darkly funny novel about the lies behind picture-perfect lives."
+  },
+  {
+    "title": "And Then There Were None",
+    "authors": ["Agatha Christie"],
+    "genres": ["Mystery", "Crime"],
+    "themes": ["closed circle", "guilt", "justice", "suspense"],
+    "publicationYear": 1939,
+    "isbn": "9780062073488",
+    "description": "Ten strangers are lured to an isolated island and killed off one by one, each accused of a hidden crime. The archetypal closed-circle mystery and one of the best-selling novels of all time."
+  },
+  {
+    "title": "The Cuckoo's Calling",
+    "authors": ["Robert Galbraith"],
+    "genres": ["Mystery", "Crime"],
+    "themes": ["detective", "celebrity", "class", "investigation"],
+    "publicationYear": 2013,
+    "isbn": "9780316206846",
+    "description": "A war-veteran private detective investigates the apparent suicide of a supermodel that her brother insists was murder. A richly plotted contemporary detective novel and the start of the Cormoran Strike series."
+  },
+  {
+    "title": "The Girl with the Dragon Tattoo",
+    "authors": ["Stieg Larsson"],
+    "genres": ["Crime", "Thriller"],
+    "themes": ["investigation", "corruption", "revenge", "dark atmosphere"],
+    "publicationYear": 2005,
+    "isbn": "9780307454546",
+    "description": "A disgraced journalist and a brilliant, antisocial hacker investigate a wealthy family's decades-old disappearance. A dark Scandinavian crime thriller about corruption, violence, and justice."
+  },
+  {
+    "title": "The No. 1 Ladies' Detective Agency",
+    "authors": ["Alexander McCall Smith"],
+    "genres": ["Mystery", "Cozy Mystery"],
+    "themes": ["gentle", "cultural setting", "wisdom", "everyday life"],
+    "publicationYear": 1998,
+    "isbn": "9781400034772",
+    "description": "Botswana's first female private detective opens an agency and solves her neighbors' small mysteries with warmth and shrewd common sense. A gentle, charming series steeped in the landscape and life of Botswana."
+  },
+  {
+    "title": "Normal People",
+    "authors": ["Sally Rooney"],
+    "genres": ["Literary Fiction", "Romance"],
+    "themes": ["complex relationships", "class", "intimacy", "coming of age"],
+    "publicationYear": 2018,
+    "isbn": "9781984822185",
+    "description": "Two young people in Ireland circle each other across years, school, and university, bound by an intense, often painful connection. A spare, intimate literary novel about love, power, and miscommunication."
+  },
+  {
+    "title": "A Little Life",
+    "authors": ["Hanya Yanagihara"],
+    "genres": ["Literary Fiction"],
+    "themes": ["trauma", "friendship", "found family", "suffering", "dark"],
+    "publicationYear": 2015,
+    "isbn": "9780385539258",
+    "description": "Four college friends build their adult lives in New York, their bond increasingly defined by one man's unspeakable past. An immersive, devastating literary novel about trauma, friendship, and endurance."
+  },
+  {
+    "title": "The Secret History",
+    "authors": ["Donna Tartt"],
+    "genres": ["Literary Fiction", "Psychological Thriller"],
+    "themes": ["dark academia", "guilt", "obsession", "complex characters", "elitism"],
+    "publicationYear": 1992,
+    "isbn": "9781400031702",
+    "description": "A group of elite classics students at a New England college are drawn into a murder that corrodes them from within. The defining dark-academia novel, a brooding study of beauty, obsession, and guilt."
+  },
+  {
+    "title": "The Goldfinch",
+    "authors": ["Donna Tartt"],
+    "genres": ["Literary Fiction", "Coming of Age"],
+    "themes": ["grief", "art", "fate", "complex characters"],
+    "publicationYear": 2013,
+    "isbn": "9780316055437",
+    "description": "A boy who survives a bombing at an art museum clings to a famous painting as his life spirals through loss and the criminal underworld. A sprawling, Dickensian literary novel about grief, art, and chance."
+  },
+  {
+    "title": "Beloved",
+    "authors": ["Toni Morrison"],
+    "genres": ["Literary Fiction", "Historical Fiction"],
+    "themes": ["slavery", "memory", "motherhood", "haunting", "trauma"],
+    "publicationYear": 1987,
+    "isbn": "9781400033416",
+    "description": "A formerly enslaved woman is haunted, literally and figuratively, by the daughter she lost and the past she cannot escape. A towering, lyrical novel about slavery, memory, and the cost of freedom."
+  },
+  {
+    "title": "Never Let Me Go",
+    "authors": ["Kazuo Ishiguro"],
+    "genres": ["Literary Fiction", "Science Fiction"],
+    "themes": ["memory", "mortality", "quiet dystopia", "love", "melancholy"],
+    "publicationYear": 2005,
+    "isbn": "9781400078776",
+    "description": "Students at a secluded English boarding school slowly discover the terrible purpose their lives were created to serve. A restrained, heartbreaking novel that uses quiet science fiction to meditate on mortality and love."
+  },
+  {
+    "title": "The Remains of the Day",
+    "authors": ["Kazuo Ishiguro"],
+    "genres": ["Literary Fiction", "Historical Fiction"],
+    "themes": ["regret", "duty", "repression", "memory", "melancholy"],
+    "publicationYear": 1989,
+    "isbn": "9780679731726",
+    "description": "An aging English butler reflects on a lifetime of service and the love and convictions he sacrificed to it. A quietly devastating novel about dignity, regret, and a life measured too late."
+  },
+  {
+    "title": "Klara and the Sun",
+    "authors": ["Kazuo Ishiguro"],
+    "genres": ["Literary Fiction", "Science Fiction"],
+    "themes": ["artificial intelligence", "love", "loneliness", "what it means to be human"],
+    "publicationYear": 2021,
+    "isbn": "9780571364879",
+    "description": "An artificial friend observes the human world with tender, careful attention as she is chosen to care for an ailing child. A gentle, philosophical novel about love, sacrifice, and what makes us human."
+  },
+  {
+    "title": "The Name of the Wind",
+    "authors": ["Patrick Rothfuss"],
+    "genres": ["Fantasy", "Epic Fantasy"],
+    "themes": ["magic", "music", "coming of age", "lost knowledge", "storytelling"],
+    "publicationYear": 2007,
+    "isbn": "9780756404741",
+    "description": "A legendary, now-hidden hero recounts the story of his life: a gifted, grieving boy's rise through a university of magic. A beautifully written epic fantasy about music, loss, and the gap between legend and truth."
+  },
+  {
+    "title": "A Game of Thrones",
+    "authors": ["George R.R. Martin"],
+    "genres": ["Fantasy", "Epic Fantasy"],
+    "themes": ["political intrigue", "war", "morally grey characters", "power"],
+    "publicationYear": 1996,
+    "isbn": "9780553103540",
+    "description": "Noble houses scheme, betray, and go to war for a kingdom's throne while an ancient threat gathers in the north. A sprawling, ruthless epic fantasy famous for its political intrigue and morally grey characters."
+  },
+  {
+    "title": "The Way of Kings",
+    "authors": ["Brandon Sanderson"],
+    "genres": ["Fantasy", "Epic Fantasy"],
+    "themes": ["war", "intricate magic system", "honor", "redemption", "epic scope"],
+    "publicationYear": 2010,
+    "isbn": "9780765326355",
+    "description": "On a storm-scoured world, a slave, a scholar, and a reluctant warrior are drawn toward an ancient power as civilization teeters. A massive, intricately built epic fantasy and the start of the Stormlight Archive."
+  },
+  {
+    "title": "Mistborn: The Final Empire",
+    "authors": ["Brandon Sanderson"],
+    "genres": ["Fantasy", "Epic Fantasy"],
+    "themes": ["heist", "rebellion", "intricate magic system", "found family"],
+    "publicationYear": 2006,
+    "isbn": "9780765311788",
+    "description": "A street thief with rare powers joins a crew plotting to overthrow an immortal god-emperor. A propulsive epic fantasy built on a clever, rule-based magic system and a daring heist structure."
+  },
+  {
+    "title": "The Hobbit",
+    "authors": ["J.R.R. Tolkien"],
+    "genres": ["Fantasy", "Classic"],
+    "themes": ["adventure", "quest", "courage", "home"],
+    "publicationYear": 1937,
+    "isbn": "9780547928227",
+    "description": "A comfort-loving hobbit is swept into a quest to reclaim a dwarf kingdom from a dragon. The warm, adventurous fantasy that opened the door to Middle-earth."
+  },
+  {
+    "title": "The Fellowship of the Ring",
+    "authors": ["J.R.R. Tolkien"],
+    "genres": ["Fantasy", "Epic Fantasy", "Classic"],
+    "themes": ["quest", "good versus evil", "friendship", "epic scope"],
+    "publicationYear": 1954,
+    "isbn": "9780547928210",
+    "description": "A hobbit inherits a ring of terrible power and sets out with an unlikely fellowship to destroy it. The foundational epic fantasy of the modern genre."
+  },
+  {
+    "title": "The Night Circus",
+    "authors": ["Erin Morgenstern"],
+    "genres": ["Fantasy", "Historical Fantasy", "Romance"],
+    "themes": ["magic", "atmospheric", "slow burn romance", "wonder", "lush prose"],
+    "publicationYear": 2011,
+    "isbn": "9780385534635",
+    "description": "Two young magicians bound by a mysterious competition fall in love inside a wondrous circus that appears only at night. A lush, dreamlike fantasy prized for its atmosphere and imagery."
+  },
+  {
+    "title": "Piranesi",
+    "authors": ["Susanna Clarke"],
+    "genres": ["Fantasy", "Literary Fiction"],
+    "themes": ["mystery", "isolation", "wonder", "identity", "atmospheric"],
+    "publicationYear": 2020,
+    "isbn": "9781635575637",
+    "description": "A man lives alone in an infinite labyrinth of tide-swept halls and statues, keeping a careful journal, until he begins to suspect the truth about his world. A spare, haunting, puzzle-like fantasy about memory and selfhood."
+  },
+  {
+    "title": "The Priory of the Orange Tree",
+    "authors": ["Samantha Shannon"],
+    "genres": ["Fantasy", "Epic Fantasy"],
+    "themes": ["dragons", "political intrigue", "feminist", "epic scope"],
+    "publicationYear": 2019,
+    "isbn": "9781635570298",
+    "description": "Across a divided world, queens, mages, and dragonriders race to prevent the return of an ancient wyrm. A standalone epic fantasy with a sweeping, feminist cast and rich worldbuilding."
+  },
+  {
+    "title": "Circe",
+    "authors": ["Madeline Miller"],
+    "genres": ["Fantasy", "Mythology", "Literary Fiction"],
+    "themes": ["mythology retelling", "feminist", "transformation", "lush prose"],
+    "publicationYear": 2018,
+    "isbn": "9780316556347",
+    "description": "The overlooked witch-goddess of Greek myth comes into her own power across centuries of gods, monsters, and mortals. A lyrical, feminist retelling that gives a minor myth a luminous inner life."
+  },
+  {
+    "title": "The Song of Achilles",
+    "authors": ["Madeline Miller"],
+    "genres": ["Fantasy", "Mythology", "Romance"],
+    "themes": ["mythology retelling", "tragic romance", "war", "lush prose"],
+    "publicationYear": 2011,
+    "isbn": "9780062060624",
+    "description": "The Trojan War is retold through the tender, doomed love between Achilles and Patroclus. A lush, emotional mythological romance that builds to inevitable tragedy."
+  },
+  {
+    "title": "Dune",
+    "authors": ["Frank Herbert"],
+    "genres": ["Science Fiction", "Epic Science Fiction"],
+    "themes": ["politics", "religion", "ecology", "destiny", "epic scope"],
+    "publicationYear": 1965,
+    "isbn": "9780441013593",
+    "description": "On a desert planet prized for a reality-bending spice, a young heir is swept into prophecy, politics, and revolution. The landmark epic of science fiction, dense with ecology, religion, and power."
+  },
+  {
+    "title": "The Three-Body Problem",
+    "authors": ["Liu Cixin"],
+    "genres": ["Science Fiction", "Hard Science Fiction"],
+    "themes": ["first contact", "physics", "cosmic scale", "cultural setting"],
+    "publicationYear": 2008,
+    "isbn": "9780765382030",
+    "description": "A secret military project reaches out to the stars and receives an answer that will change humanity's fate, beginning against the backdrop of China's Cultural Revolution. A cerebral, ambitious hard-SF epic of first contact."
+  },
+  {
+    "title": "Project Hail Mary",
+    "authors": ["Andy Weir"],
+    "genres": ["Science Fiction", "Hard Science Fiction"],
+    "themes": ["survival", "problem solving", "friendship", "humor", "space"],
+    "publicationYear": 2021,
+    "isbn": "9780593135204",
+    "description": "A lone astronaut wakes with amnesia on a desperate mission to save Earth and finds help from an unexpected source. A warm, inventive hard-SF adventure driven by science, wit, and an unlikely friendship."
+  },
+  {
+    "title": "The Martian",
+    "authors": ["Andy Weir"],
+    "genres": ["Science Fiction", "Hard Science Fiction"],
+    "themes": ["survival", "problem solving", "humor", "space", "ingenuity"],
+    "publicationYear": 2011,
+    "isbn": "9780553418026",
+    "description": "Stranded alone on Mars, an astronaut must science his way to survival while Earth scrambles to bring him home. A funny, nail-biting survival story grounded in real engineering."
+  },
+  {
+    "title": "Neuromancer",
+    "authors": ["William Gibson"],
+    "genres": ["Science Fiction", "Cyberpunk"],
+    "themes": ["cyberpunk", "artificial intelligence", "noir", "technology"],
+    "publicationYear": 1984,
+    "isbn": "9780441569595",
+    "description": "A burned-out hacker is hired for one last job that drags him into a plot orchestrated by an artificial intelligence. The novel that defined cyberpunk, all neon, data, and noir."
+  },
+  {
+    "title": "Ancillary Justice",
+    "authors": ["Ann Leckie"],
+    "genres": ["Science Fiction", "Space Opera"],
+    "themes": ["identity", "empire", "revenge", "gender", "artificial intelligence"],
+    "publicationYear": 2013,
+    "isbn": "9780316246620",
+    "description": "Once the mind of a warship inhabiting many bodies, now trapped in a single one, a soldier pursues revenge against the ruler of an empire. An inventive space opera that reimagines identity, gender, and consciousness."
+  },
+  {
+    "title": "The Left Hand of Darkness",
+    "authors": ["Ursula K. Le Guin"],
+    "genres": ["Science Fiction"],
+    "themes": ["gender", "politics", "cultural setting", "loyalty"],
+    "publicationYear": 1969,
+    "isbn": "9780441478125",
+    "description": "An envoy to an icebound world where people have no fixed gender must navigate its politics and his own assumptions. A profound, humane work of anthropological science fiction."
+  },
+  {
+    "title": "Recursion",
+    "authors": ["Blake Crouch"],
+    "genres": ["Science Fiction", "Thriller"],
+    "themes": ["memory", "time", "fast-paced", "mind-bending"],
+    "publicationYear": 2019,
+    "isbn": "9781524759780",
+    "description": "A detective and a neuroscientist chase a technology that lets people revisit their memories, with reality unraveling in its wake. A propulsive, mind-bending science-fiction thriller about memory and time."
+  },
+  {
+    "title": "Dark Matter",
+    "authors": ["Blake Crouch"],
+    "genres": ["Science Fiction", "Thriller"],
+    "themes": ["parallel worlds", "identity", "fast-paced", "mind-bending"],
+    "publicationYear": 2016,
+    "isbn": "9781101904220",
+    "description": "A physics professor is abducted into a version of his life he never chose and must fight across parallel worlds to get home. A fast, high-concept thriller about the roads not taken."
+  },
+  {
+    "title": "The Love Hypothesis",
+    "authors": ["Ali Hazelwood"],
+    "genres": ["Romance", "Contemporary Romance"],
+    "themes": ["fake dating", "slow burn romance", "great banter", "STEM", "humor"],
+    "publicationYear": 2021,
+    "isbn": "9780593336823",
+    "description": "A PhD student fake-dates a notoriously grumpy professor to convince her best friend she has moved on, and the pretense gets complicated. A witty, swoony contemporary romance set in academic science with great banter."
+  },
+  {
+    "title": "Beach Read",
+    "authors": ["Emily Henry"],
+    "genres": ["Romance", "Contemporary Romance"],
+    "themes": ["enemies to lovers", "grief", "great banter", "writers"],
+    "publicationYear": 2020,
+    "isbn": "9781984806734",
+    "description": "A burned-out romance writer and a literary novelist, stuck in neighboring beach houses, dare each other to swap genres. A warm, funny romance with real emotional depth beneath the banter."
+  },
+  {
+    "title": "People We Meet on Vacation",
+    "authors": ["Emily Henry"],
+    "genres": ["Romance", "Contemporary Romance"],
+    "themes": ["friends to lovers", "slow burn romance", "great banter", "travel"],
+    "publicationYear": 2021,
+    "isbn": "9781984806758",
+    "description": "Two best friends with opposite personalities take one more summer trip to repair a friendship that may be something more. A sunny, tender friends-to-lovers romance full of humor and longing."
+  },
+  {
+    "title": "Red, White & Royal Blue",
+    "authors": ["Casey McQuiston"],
+    "genres": ["Romance", "Contemporary Romance"],
+    "themes": ["enemies to lovers", "lgbtq", "great banter", "politics", "uplifting"],
+    "publicationYear": 2019,
+    "isbn": "9781250316776",
+    "description": "The American president's son and a British prince go from tabloid rivals to secret lovers. A joyful, funny, optimistic queer romance with sparkling banter."
+  },
+  {
+    "title": "Pride and Prejudice",
+    "authors": ["Jane Austen"],
+    "genres": ["Romance", "Classic"],
+    "themes": ["enemies to lovers", "class", "wit", "social satire"],
+    "publicationYear": 1813,
+    "isbn": "9780141439518",
+    "description": "A quick-witted young woman and a proud, wealthy gentleman misjudge each other before love overturns their pride. The witty, enduring classic of the enemies-to-lovers romance."
+  },
+  {
+    "title": "All the Light We Cannot See",
+    "authors": ["Anthony Doerr"],
+    "genres": ["Historical Fiction", "Literary Fiction"],
+    "themes": ["World War II", "lush prose", "resilience", "intertwined lives"],
+    "publicationYear": 2014,
+    "isbn": "9781476746586",
+    "description": "A blind French girl and a German boy soldier are drawn together by fate in occupied France during World War II. A luminous, finely crafted historical novel about courage and small acts of grace."
+  },
+  {
+    "title": "The Book Thief",
+    "authors": ["Markus Zusak"],
+    "genres": ["Historical Fiction", "Literary Fiction"],
+    "themes": ["World War II", "books", "death", "found family", "coming of age"],
+    "publicationYear": 2005,
+    "isbn": "9780375842207",
+    "description": "In Nazi Germany, a girl steals books and shares them while her foster family hides a Jewish man, narrated by Death itself. A tender, inventive novel about words, loss, and humanity amid horror."
+  },
+  {
+    "title": "Pachinko",
+    "authors": ["Min Jin Lee"],
+    "genres": ["Historical Fiction", "Literary Fiction"],
+    "themes": ["family saga", "immigration", "cultural setting", "resilience", "identity"],
+    "publicationYear": 2017,
+    "isbn": "9781455563937",
+    "description": "Four generations of a Korean family endure poverty, prejudice, and displacement across twentieth-century Korea and Japan. A sweeping, deeply human family saga about belonging and survival."
+  },
+  {
+    "title": "The Nightingale",
+    "authors": ["Kristin Hannah"],
+    "genres": ["Historical Fiction"],
+    "themes": ["World War II", "sisters", "resistance", "sacrifice", "resilience"],
+    "publicationYear": 2015,
+    "isbn": "9780312577223",
+    "description": "Two sisters in occupied France take different, dangerous paths of resistance during World War II. An emotional historical novel about the courage of ordinary women in wartime."
+  },
+  {
+    "title": "Homegoing",
+    "authors": ["Yaa Gyasi"],
+    "genres": ["Historical Fiction", "Literary Fiction"],
+    "themes": ["family saga", "slavery", "cultural setting", "identity", "generational"],
+    "publicationYear": 2016,
+    "isbn": "9781101947135",
+    "description": "Two half-sisters in Ghana are set on divergent fates, one married off and one sold into slavery, their descendants traced across three centuries. A powerful generational saga about the long shadow of slavery."
+  },
+  {
+    "title": "The Shadow of the Wind",
+    "authors": ["Carlos Ruiz Zafon"],
+    "genres": ["Historical Fiction", "Mystery", "Gothic"],
+    "themes": ["books", "atmospheric", "mystery", "cultural setting", "love"],
+    "publicationYear": 2001,
+    "isbn": "9780143034902",
+    "description": "In postwar Barcelona, a boy discovers a forgotten novel and sets out to find its author, only to learn someone is destroying every copy of his books. An atmospheric, gothic literary mystery and a love letter to reading."
+  },
+  {
+    "title": "Wolf Hall",
+    "authors": ["Hilary Mantel"],
+    "genres": ["Historical Fiction", "Literary Fiction"],
+    "themes": ["political intrigue", "power", "Tudor England", "complex characters"],
+    "publicationYear": 2009,
+    "isbn": "9780312429980",
+    "description": "The rise of Thomas Cromwell from blacksmith's son to the most powerful adviser in Henry VIII's England. A dense, brilliant historical novel about power, loyalty, and survival at court."
+  },
+  {
+    "title": "The Shining",
+    "authors": ["Stephen King"],
+    "genres": ["Horror"],
+    "themes": ["haunting", "isolation", "madness", "family", "dark atmosphere"],
+    "publicationYear": 1977,
+    "isbn": "9780307743657",
+    "description": "A troubled writer takes a winter caretaking job at an isolated hotel that preys on his family and his sanity. A classic of psychological horror about isolation, addiction, and a malevolent place."
+  },
+  {
+    "title": "Mexican Gothic",
+    "authors": ["Silvia Moreno-Garcia"],
+    "genres": ["Horror", "Gothic"],
+    "themes": ["haunting", "atmospheric", "cultural setting", "dread", "feminist"],
+    "publicationYear": 2020,
+    "isbn": "9780525620785",
+    "description": "A glamorous young socialite travels to a decaying mansion in the Mexican countryside to rescue her cousin and uncovers its horrifying secret. A lush, creeping gothic horror thick with dread and atmosphere."
+  },
+  {
+    "title": "The Haunting of Hill House",
+    "authors": ["Shirley Jackson"],
+    "genres": ["Horror", "Gothic"],
+    "themes": ["haunting", "psychological", "isolation", "dread"],
+    "publicationYear": 1959,
+    "isbn": "9780143039983",
+    "description": "Four people gather to investigate a house with a sinister reputation, and one fragile woman begins to feel it claim her. A masterful, ambiguous ghost story that works entirely on psychological dread."
+  },
+  {
+    "title": "The Midnight Library",
+    "authors": ["Matt Haig"],
+    "genres": ["Literary Fiction", "Fantasy"],
+    "themes": ["second chances", "regret", "mental health", "uplifting", "what if"],
+    "publicationYear": 2020,
+    "isbn": "9780525559474",
+    "description": "Between life and death lies a library where a despairing woman can try the lives she might have lived. A warm, philosophical novel about regret, possibility, and learning to value the life you have."
+  },
+  {
+    "title": "A Man Called Ove",
+    "authors": ["Fredrik Backman"],
+    "genres": ["Literary Fiction", "Humor"],
+    "themes": ["grief", "community", "uplifting", "curmudgeon", "found family"],
+    "publicationYear": 2012,
+    "isbn": "9781476738024",
+    "description": "A rigid, grumpy widower's plans are repeatedly interrupted by the noisy neighbors who slowly pull him back into life. A funny, tender novel about grief, community, and unexpected second chances."
+  },
+  {
+    "title": "Where the Crawdads Sing",
+    "authors": ["Delia Owens"],
+    "genres": ["Literary Fiction", "Mystery"],
+    "themes": ["nature", "isolation", "coming of age", "small town", "trial"],
+    "publicationYear": 2018,
+    "isbn": "9780735219090",
+    "description": "A girl abandoned to raise herself in the marshes of North Carolina becomes a murder suspect when a local man is found dead. A lyrical blend of coming-of-age story, nature writing, and courtroom mystery."
+  },
+  {
+    "title": "Educated",
+    "authors": ["Tara Westover"],
+    "genres": ["Memoir", "Nonfiction"],
+    "themes": ["family", "education", "resilience", "identity", "self-discovery"],
+    "publicationYear": 2018,
+    "isbn": "9780399590504",
+    "description": "Raised by survivalist parents who kept her out of school, the author claws her way to education and, eventually, a doctorate. A gripping memoir about family, loyalty, and the transformative, costly power of learning."
+  },
+  {
+    "title": "Sapiens: A Brief History of Humankind",
+    "authors": ["Yuval Noah Harari"],
+    "genres": ["Nonfiction", "History"],
+    "themes": ["big ideas", "history", "anthropology", "thought-provoking"],
+    "publicationYear": 2011,
+    "isbn": "9780062316097",
+    "description": "A sweeping account of how one unremarkable ape came to dominate the planet through stories, money, and belief. A provocative, accessible big-history book about what made humans human."
+  },
+  {
+    "title": "The Kite Runner",
+    "authors": ["Khaled Hosseini"],
+    "genres": ["Literary Fiction", "Historical Fiction"],
+    "themes": ["friendship", "guilt", "redemption", "cultural setting", "fathers and sons"],
+    "publicationYear": 2003,
+    "isbn": "9781594631931",
+    "description": "A privileged boy in Kabul betrays his loyal friend and spends his life seeking a way to atone, against the backdrop of Afghanistan's upheavals. An emotional novel about guilt, friendship, and redemption."
+  },
+  {
+    "title": "1984",
+    "authors": ["George Orwell"],
+    "genres": ["Science Fiction", "Dystopian", "Classic"],
+    "themes": ["dystopia", "surveillance", "totalitarianism", "oppression", "dark"],
+    "publicationYear": 1949,
+    "isbn": "9780451524935",
+    "description": "In a totalitarian superstate that monitors everything, a low-ranking worker risks everything for forbidden thought and love. The defining dystopian novel about surveillance, propaganda, and the control of truth."
+  },
+  {
+    "title": "Brave New World",
+    "authors": ["Aldous Huxley"],
+    "genres": ["Science Fiction", "Dystopian", "Classic"],
+    "themes": ["dystopia", "conformity", "technology", "free will"],
+    "publicationYear": 1932,
+    "isbn": "9780060850524",
+    "description": "A future society engineers happiness through conditioning, drugs, and the abolition of want, until an outsider questions the cost. A chilling dystopia about comfort traded for freedom."
+  },
+  {
+    "title": "The Handmaid's Tale",
+    "authors": ["Margaret Atwood"],
+    "genres": ["Science Fiction", "Dystopian", "Literary Fiction"],
+    "themes": ["dystopia", "oppression", "feminist", "resistance", "dark"],
+    "publicationYear": 1985,
+    "isbn": "9780385490818",
+    "description": "In a theocratic regime that has stripped women of their rights, a handmaid kept for childbearing remembers the world she lost. A harrowing feminist dystopia about control, complicity, and survival."
+  }
+]

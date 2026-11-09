@@ -4,10 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * A thematic tag (e.g. "Political", "Psychological", "Coming of age") distinct
- * from Genre. Themes are assigned by {@code BookThemeTaggingService} using an
- * LLM call against the book's description, since they're more nuanced than a
- * catalog-provided genre list.
+ * A thematic tag (e.g. "unreliable narrator", "found family", "slow burn")
+ * distinct from Genre. Themes are curated metadata loaded with the seed catalog
+ * and used by the ranking step to reward books whose themes match the request.
  */
 @Entity
 @Table(name = "themes", uniqueConstraints = {

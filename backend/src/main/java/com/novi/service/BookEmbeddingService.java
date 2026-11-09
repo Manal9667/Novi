@@ -26,6 +26,7 @@ public class BookEmbeddingService {
     private final EmbeddingService embeddingService;
     private final BookRepository bookRepository;
     private final PgVectorSupport pgVectorSupport;
+    private final com.novi.config.AiProperties aiProperties;
 
     @Transactional
     public void ensureEmbedding(Book book) {
@@ -37,7 +38,7 @@ public class BookEmbeddingService {
         embeddingService.embed(representation).ifPresent(vector -> {
             String json = VectorUtils.toJson(vector);
             book.setEmbedding(json);
-            book.setEmbeddingModel("voyage");
+            book.setEmbeddingModel(aiProperties.getEmbedding().getModel());
             book.setEmbeddingUpdatedAt(Instant.now());
             Book saved = bookRepository.save(book);
             // Only touch the native vector column when it actually exists,
@@ -74,13 +75,21 @@ public class BookEmbeddingService {
             return 0;
         }
         List<Book> missing = bookRepository.findByEmbeddingIsNull();
-        int processed = 0;
+        int attempted = 0;
+        int succeeded = 0;
         for (Book book : missing) {
-            if (processed >= maxBooks) break;
+            if (attempted >= maxBooks) break;
             ensureEmbedding(book);
-            processed++;
+            attempted++;
+            if (book.getEmbedding() != null) {
+                succeeded++;
+            }
         }
-        return processed;
+        if (succeeded < attempted) {
+            log.warn("Embedding backfill: {} of {} attempted book(s) failed (provider error); "
+                    + "retrieval will use the lexical fallback for those", attempted - succeeded, attempted);
+        }
+        return succeeded;
     }
 
     private String buildRepresentation(Book book) {
@@ -92,6 +101,9 @@ public class BookEmbeddingService {
 
         String genres = book.getGenres().stream().map(Genre::getName).reduce((a, b) -> a + ", " + b).orElse("");
         if (!genres.isBlank()) sb.append("Genres: ").append(genres).append("\n");
+
+        String themes = book.getThemes().stream().map(com.novi.entity.Theme::getName).reduce((a, b) -> a + ", " + b).orElse("");
+        if (!themes.isBlank()) sb.append("Themes: ").append(themes).append("\n");
 
         if (book.getDescription() != null && !book.getDescription().isBlank()) {
             sb.append("Description: ").append(book.getDescription());

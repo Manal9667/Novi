@@ -7,7 +7,6 @@ import com.novi.entity.Author;
 import com.novi.entity.Book;
 import com.novi.entity.User;
 import com.novi.entity.UserBook;
-import com.novi.entity.enums.HistoryEventType;
 import com.novi.entity.enums.ReadingStatus;
 import com.novi.exception.DuplicateResourceException;
 import com.novi.exception.ResourceNotFoundException;
@@ -26,8 +25,6 @@ public class LibraryService {
 
     private final UserBookRepository userBookRepository;
     private final BookService bookService;
-    private final ReadingHistoryService readingHistoryService;
-    private final TasteProfileService tasteProfileService;
 
     @Transactional
     public UserBookResponse addBook(User user, Long bookId, ReadingStatus requestedStatus) {
@@ -37,7 +34,7 @@ public class LibraryService {
             throw new DuplicateResourceException("Book is already in your library");
         }
 
-        ReadingStatus status = requestedStatus != null ? requestedStatus : ReadingStatus.WANT_TO_READ;
+        ReadingStatus status = requestedStatus != null ? requestedStatus : ReadingStatus.SAVED;
 
         UserBook userBook = UserBook.builder()
                 .user(user)
@@ -48,9 +45,6 @@ public class LibraryService {
                 .build();
 
         userBook = userBookRepository.save(userBook);
-        readingHistoryService.record(user, book, HistoryEventType.ADDED_TO_LIBRARY);
-        tasteProfileService.markStale(user);
-
         return toResponse(userBook);
     }
 
@@ -61,37 +55,6 @@ public class LibraryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Book is not in your library"));
 
         userBookRepository.delete(userBook);
-        readingHistoryService.record(user, book, HistoryEventType.REMOVED_FROM_LIBRARY);
-        tasteProfileService.markStale(user);
-    }
-
-    @Transactional
-    public UserBookResponse updateStatus(User user, Long bookId, ReadingStatus newStatus) {
-        Book book = bookService.getEntityById(bookId);
-        UserBook userBook = userBookRepository.findByUserAndBook(user, book)
-                .orElseThrow(() -> new ResourceNotFoundException("Book is not in your library"));
-
-        userBook.setStatus(newStatus);
-
-        HistoryEventType eventType;
-        switch (newStatus) {
-            case CURRENTLY_READING -> {
-                if (userBook.getStartedAt() == null) userBook.setStartedAt(Instant.now());
-                eventType = HistoryEventType.STARTED_READING;
-            }
-            case READ -> {
-                userBook.setFinishedAt(Instant.now());
-                eventType = HistoryEventType.FINISHED_READING;
-            }
-            case DNF -> eventType = HistoryEventType.MARKED_DNF;
-            default -> eventType = HistoryEventType.STATUS_CHANGED;
-        }
-
-        userBook = userBookRepository.save(userBook);
-        readingHistoryService.record(user, book, eventType);
-        tasteProfileService.markStale(user);
-
-        return toResponse(userBook);
     }
 
     @Transactional(readOnly = true)

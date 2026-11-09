@@ -3,13 +3,9 @@ package com.novi.controller;
 import com.novi.dto.book.BookResponse;
 import com.novi.dto.book.BookSummaryResponse;
 import com.novi.dto.common.PageResponse;
-import com.novi.dto.review.ReviewResponse;
 import com.novi.service.BookEmbeddingService;
 import com.novi.service.BookService;
-import com.novi.service.ReviewService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,13 +16,10 @@ public class BookController {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final BookService bookService;
-    private final ReviewService reviewService;
     private final BookEmbeddingService bookEmbeddingService;
 
     /**
-     * Browse the local catalog. Public and side-effect-free: it only reads
-     * already-imported books. Live external search lives at {@code /search}
-     * because it writes to the database and calls external providers.
+     * Browse the seeded catalog. Public and side-effect-free.
      */
     @GetMapping
     public PageResponse<BookSummaryResponse> browse(
@@ -37,46 +30,19 @@ public class BookController {
         return PageResponse.from(bookService.browse(Math.max(0, page), boundedSize));
     }
 
-    /**
-     * Live search against the external metadata provider. Unlike browsing, this
-     * imports any new results - persisting Book/Author/Genre rows and making
-     * outbound provider/AI calls - so it is an authenticated, state-changing
-     * operation (see SecurityConfig) rather than part of the public read surface.
-     * Results aren't paginated at the source, so they come back as a single page.
-     */
-    @GetMapping("/search")
-    public PageResponse<BookSummaryResponse> search(@RequestParam(defaultValue = "") String q) {
-        if (q.isBlank()) {
-            return PageResponse.ofSinglePage(java.util.List.of());
-        }
-        return PageResponse.ofSinglePage(bookService.search(q));
-    }
-
     @GetMapping("/{id}")
     public BookResponse getById(@PathVariable Long id) {
         return bookService.getById(id);
     }
 
-    @GetMapping("/{id}/reviews")
-    public PageResponse<ReviewResponse> getReviews(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        int boundedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
-        PageRequest pageable = PageRequest.of(Math.max(0, page), boundedSize, Sort.by("createdAt").descending());
-        return reviewService.getForBook(id, pageable);
-    }
-
     /**
-     * Backfills embeddings for any book imported before the AI providers were
-     * configured (or before Phase 2 existed at all). Restricted to admins
-     * (see SecurityConfig / {@code novi.security.admin-usernames}) because it
-     * can trigger a large number of outbound embedding calls.
+     * Backfills embeddings for any seeded book that doesn't yet have one.
+     * Restricted to admins (see SecurityConfig / {@code novi.security.admin-usernames})
+     * because it can trigger a batch of outbound embedding calls.
      */
     @PostMapping("/backfill-embeddings")
     public java.util.Map<String, Integer> backfillEmbeddings(@RequestParam(defaultValue = "200") int limit) {
-        int processed = bookEmbeddingService.backfillMissingEmbeddings(Math.max(1, Math.min(limit, 200)));
+        int processed = bookEmbeddingService.backfillMissingEmbeddings(Math.max(1, Math.min(limit, 500)));
         return java.util.Map.of("processed", processed);
     }
 }

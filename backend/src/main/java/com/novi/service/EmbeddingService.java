@@ -4,8 +4,8 @@ import java.util.Optional;
 
 /**
  * Produces a semantic embedding for a piece of text. Kept as an interface so
- * the embedding provider (currently Voyage AI) can be swapped without
- * touching {@code BookEmbeddingService} or {@code TasteProfileService}.
+ * the embedding provider (currently Google Gemini) can be swapped without
+ * touching {@code BookEmbeddingService} or the retrieval pipeline.
  */
 public interface EmbeddingService {
     boolean isAvailable();

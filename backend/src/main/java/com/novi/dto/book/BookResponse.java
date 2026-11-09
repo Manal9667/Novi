@@ -12,7 +12,6 @@ public record BookResponse(
         LocalDate publicationDate,
         List<AuthorDto> authors,
         List<GenreDto> genres,
-        Double averageRating,
-        long ratingCount
+        List<String> themes
 ) {
 }

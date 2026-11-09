@@ -16,12 +16,23 @@ public class CurrentUserProvider {
     private final UserRepository userRepository;
 
     public User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
+        User user = getCurrentUserOrNull();
+        if (user == null) {
             throw new org.springframework.security.access.AccessDeniedException("Not authenticated");
         }
-        String username = ((UserDetails) auth.getPrincipal()).getUsername();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Not authenticated"));
+        return user;
+    }
+
+    /**
+     * Resolves the authenticated user, or {@code null} when the request is
+     * anonymous. Used by endpoints that are public but personalize when a user
+     * is signed in (e.g. natural-language recommendations).
+     */
+    public User getCurrentUserOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof UserDetails principal)) {
+            return null;
+        }
+        return userRepository.findByUsername(principal.getUsername()).orElse(null);
     }
 }

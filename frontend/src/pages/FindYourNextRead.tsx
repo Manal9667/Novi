@@ -4,23 +4,25 @@ import { ErrorState } from '../components/states/ErrorState';
 import { EmptyState } from '../components/states/EmptyState';
 import { NookIllustration, CompassIcon } from '../components/icons';
 import { getApiErrorMessage, recommendationService } from '../services';
-import type { RecommendationResponse } from '../types';
+import type { Recommendation } from '../types';
 
 const EXAMPLES = [
-  'Chinese historical fiction about family',
-  'A short mystery I can finish this weekend',
-  'Something like Dune but less dense',
-  'A best seller romance with great banter',
-  'A cozy mystery set in a small town'
+  'A psychological thriller with an unreliable narrator, like The Silent Patient',
+  'A short, cozy mystery I can finish this weekend',
+  'Literary sci-fi about memory and what makes us human',
+  'An epic fantasy with intricate magic and political intrigue',
+  'A sweeping historical family saga across generations',
+  'Something like Dune but less dense'
 ];
 
 /**
- * "Find Your Next Read" — the agentic, natural-language recommender. The user's
- * request is the primary signal, so it works for brand-new readers too.
+ * Novi's home: the natural-language book discovery experience. The query box is
+ * the central element; the reader describes what they want in plain words and
+ * the RAG pipeline returns ranked, explained recommendations.
  */
 export default function FindYourNextRead() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<RecommendationResponse[] | null>(null);
+  const [results, setResults] = useState<Recommendation[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState('');
@@ -48,25 +50,28 @@ export default function FindYourNextRead() {
 
   return (
     <div className="page find">
-      <section className="find-hero card card-pad">
+      <section className="find-hero">
         <NookIllustration className="find-illo" />
-        <h1>What are you in the mood to read?</h1>
-        <p className="hand find-sub">Tell me a genre, a mood, an author, a vibe — anything.</p>
+        <p className="eyebrow">AI-powered book discovery</p>
+        <h1>Tell Novi what you want to read.</h1>
+        <p className="find-sub hand">A genre, a mood, an author, a vibe — describe it however you like.</p>
+
         <form onSubmit={handleSubmit} className="find-form">
-          <label htmlFor="find-input" className="visually-hidden">Describe what you want to read</label>
+          <label htmlFor="find-input" className="visually-hidden">Describe the book you want</label>
           <textarea
             id="find-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder='e.g. "a beautifully written but hopeful novel about grief"'
-            rows={2}
+            placeholder='e.g. "a beautifully written but hopeful novel about grief and starting over"'
+            rows={3}
             maxLength={500}
           />
-          <button type="submit" disabled={loading || !query.trim()} className="btn-accent">
-            <CompassIcon size={18} /> {loading ? 'Browsing the shelves…' : 'Find books'}
+          <button type="submit" disabled={loading || !query.trim()} className="btn-accent find-submit">
+            <CompassIcon size={18} /> {loading ? 'Finding books…' : 'Find my next read'}
           </button>
         </form>
-        <div className="find-examples">
+
+        <div className="find-examples" aria-label="Example requests">
           {EXAMPLES.map((ex) => (
             <button key={ex} type="button" className="sticky" disabled={loading} onClick={() => { setQuery(ex); void runSearch(ex); }}>
               {ex}
@@ -80,23 +85,25 @@ export default function FindYourNextRead() {
       {loading && (
         <div className="find-loading" role="status" aria-live="polite">
           <span className="spinner" aria-hidden="true" />
-          <p className="hand">Novi is browsing the shelves for you…</p>
+          <p className="hand">Novi is understanding your request and searching the shelves…</p>
         </div>
       )}
 
       {!loading && !error && results && (
-        <section>
-          <div className="section-header"><h2>Books Novi found for you</h2></div>
+        <section className="results">
+          <div className="section-header">
+            <h2>Books for “{lastQuery}”</h2>
+          </div>
           {results.length > 0 ? (
             <div className="recommendation-list">
               {results.map((rec) => (
-                <RecommendationCard key={rec.id} recommendation={rec} />
+                <RecommendationCard key={rec.bookId} rec={rec} />
               ))}
             </div>
           ) : (
             <EmptyState
               title="Nothing quite matched"
-              message={`I couldn't find a good fit for "${lastQuery}". Try describing the feeling you're after, or a book you loved.`}
+              message={`Novi couldn't find a strong fit for "${lastQuery}". Try describing the feeling you're after, or a book you loved.`}
             />
           )}
         </section>

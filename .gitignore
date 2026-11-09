@@ -2,6 +2,10 @@ target/
 .idea/
 *.iml
 .env
+*.log
 norton-root.cer
-# Extra root CA certs for TLS-intercepting networks: keep the folder, ignore the certs.
+# Extra root CA certs for TLS-intercepting networks: keep the folders, ignore the certs.
 certs/*.cer
+certs/*.pem
+**/certs/*.cer
+**/certs/*.pem
