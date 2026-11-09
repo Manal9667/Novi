@@ -1,4 +1,0 @@
-﻿CHAT gemini-3.8-flash FAIL: 
-CHAT gemini-3.8-flash-lite FAIL: 
-CHAT gemini-3.5-flash-lite OK: OK
-EMBED gemini-embedding-001 dims=768 len=768
